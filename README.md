@@ -24,7 +24,7 @@ Bundles three skills:
 Inside Claude Code:
 
 ```
-/plugin marketplace add <git-url-of-this-repo>
+/plugin marketplace add mrenvoize/koha-contributor
 /plugin install koha-contributor
 ```
 
