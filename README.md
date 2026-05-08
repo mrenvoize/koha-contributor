@@ -2,7 +2,7 @@
 
 Claude Code skills for contributing to [Koha ILS](https://koha-community.org/).
 
-Bundles nine skills:
+Bundles ten skills:
 
 | Skill | Triggers | What it does |
 |-------|----------|--------------|
@@ -15,6 +15,7 @@ Bundles nine skills:
 | `atomicupdate` | "create atomicupdate", "scaffold a DB change for bug NNNNN" | Scaffolds a Koha atomicupdate `.pl` file, makes it executable, and reminds about the wider workflow. |
 | `koha-schema-apply` | "apply schema change", "regenerate dbic" | End-to-end DB workflow: runs `updatedatabase.pl`, `dbic --force`, and reminds about manual `is_boolean` / relation edits below the marker line. |
 | `koha-syspref` | "add a system preference", "new syspref" | Generates the atomicupdate INSERT and the matching `.pref` YAML entry so the syspref shows up in the admin UI. |
+| `koha-review` | "QA this patchset", "review my branch", "review last N commits" | Auto-detects patchset scope, fans out specialist review agents in parallel, applies a Koha-specific checklist, and synthesises Critical / Important / Suggestion findings with file:line citations. |
 
 ## Requirements
 
