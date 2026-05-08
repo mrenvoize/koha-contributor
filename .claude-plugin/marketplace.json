@@ -1,5 +1,6 @@
 {
   "name": "koha-contributor",
+  "description": "Claude Code skills for contributing to Koha ILS: file Bugzilla bugs, run Perl tests in KTD, scaffold atomicupdate files.",
   "owner": {
     "name": "Martin Renvoize"
   },
