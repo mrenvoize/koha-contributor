@@ -1,0 +1,60 @@
+name: Sync handbook subtree
+
+on:
+  schedule:
+    # Weekly, Monday 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Pull handbook subtree
+        id: pull
+        run: |
+          set -euo pipefail
+          git checkout -B chore/sync-handbook origin/main
+          BEFORE=$(git rev-parse HEAD)
+          git subtree pull \
+            --prefix=references/koha-handbook \
+            https://github.com/thekesolutions/koha-handbook.git main \
+            --squash \
+            -m "chore: sync references/koha-handbook from upstream"
+          AFTER=$(git rev-parse HEAD)
+          if [ "$BEFORE" = "$AFTER" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push branch and open PR
+        if: steps.pull.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git push -f origin chore/sync-handbook
+          if gh pr view chore/sync-handbook --json number >/dev/null 2>&1; then
+            echo "PR already exists; branch updated."
+          else
+            gh pr create \
+              --base main \
+              --head chore/sync-handbook \
+              --title "chore: sync references/koha-handbook from upstream" \
+              --body "Automated sync of [koha-handbook](https://github.com/thekesolutions/koha-handbook) into \`references/koha-handbook/\` via \`git subtree pull --squash\`. Review the diff, then merge."
+          fi

@@ -28,6 +28,19 @@ Almost every Koha CLI tool runs **inside the KTD container** (`kohadev-koha-1`),
 | `yarn build` (koha-build) | file scaffolding (atomicupdate, koha-syspref) |
 | `updatedatabase.pl`, `dbic --force` (koha-schema-apply) | |
 
+## Vendored handbook (`references/koha-handbook/`)
+
+The [koha-handbook](https://github.com/thekesolutions/koha-handbook) (design patterns, naming conventions, REST API architecture, testing framework, etc.) is vendored into this repo as a `git subtree` so it ships with the plugin and is available offline. **Do not edit files under `references/koha-handbook/` directly** — they are upstream content. Fix issues upstream, then re-sync.
+
+Sync mechanism: `.github/workflows/sync-handbook.yml` runs weekly (Monday 06:00 UTC) and on `workflow_dispatch`, doing `git subtree pull --squash` from upstream `main` and opening a PR if anything changed. Manual sync from a local checkout:
+
+```bash
+git subtree pull --prefix=references/koha-handbook \
+  https://github.com/thekesolutions/koha-handbook.git main --squash
+```
+
+When citing handbook content from a skill, link to the vendored path (e.g. `references/koha-handbook/koha_design_patterns.md`) — that's the copy the user has locally; URLs would require network.
+
 ## SKILL.md conventions
 
 Every skill is a single markdown file with YAML frontmatter. Required fields: `name` (matching the directory) and `description`. The `description` is what the agent matches against when deciding whether to invoke the skill — write it as a behavioural specification: include trigger phrases ("Use when the user says X"), expected arguments, and what the skill actually does. Examples to model new skills on:
