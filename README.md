@@ -20,9 +20,28 @@ Bundles ten skills:
 ## Requirements
 
 - **Claude Code** with plugin support
-- **`git bz`** installed and authenticated (`git bz --help` once interactively to populate `~/.git-bz`) — for `koha-bz`
-- **KTD** ([Koha Testing Docker](https://gitlab.com/koha-community/koha-testing-docker)) running, with container name `kohadev-koha-1` — for `koha-prove`
-- A local Koha checkout — for `atomicupdate` (run from the repo root)
+- **`git bz`** installed and authenticated (`git bz --help` once interactively to populate `~/.git-bz`) — for `koha-bz` and `koha-bz-fetch`
+- **KTD** ([Koha Testing Docker](https://gitlab.com/koha-community/koha-testing-docker)) running, with container name `kohadev-koha-1` — for `koha-prove`, `koha-cypress`, `koha-qa`, `koha-build`, `koha-schema-apply`
+- A local Koha checkout — for `atomicupdate`, `koha-syspref`, `koha-review` (run from the repo root)
+
+### Recommended companion plugins
+
+`koha-review` orchestrates specialist review agents in parallel. It works
+without these, but is significantly more thorough when they're installed:
+
+- **`pr-review-toolkit`** (Anthropic, on the `claude-code-plugins`
+  marketplace) — provides `code-reviewer`, `silent-failure-hunter`,
+  `pr-test-analyzer`, `comment-analyzer`, and `type-design-analyzer`
+  agents that `koha-review` fans out to based on what's in the diff.
+
+  ```
+  /plugin marketplace add anthropics/claude-code-plugins
+  /plugin install pr-review-toolkit
+  ```
+
+If `pr-review-toolkit` isn't installed, `koha-review` falls back to direct
+review by the model — you lose the parallel speedup but still get the
+Koha-specific checklist.
 
 ## Installation
 
@@ -64,8 +83,9 @@ This gets the skills working but skips version tracking via the plugin manager.
 
 ## Verifying
 
-After install, run `/help` inside Claude Code and confirm the three skills
-appear under "Skills". Trigger one with a phrase like:
+After install, run `/help` inside Claude Code and confirm the skills
+appear under "Skills" (namespaced as `koha-contributor:<skill>`). Trigger
+one with a phrase like:
 
 > Please file a Koha bug for the changes on this branch.
 
@@ -73,9 +93,10 @@ The `koha-bz` skill should activate.
 
 ## Skill design notes
 
-- **Why a skill, not an MCP server?** All three wrap existing CLI tools (`git bz`, `prove`, file scaffolding). A skill is markdown + workflow guidance, no process to run. MCP would be heavier with no capability gain.
-- **Why three skills, not one?** Each has a distinct trigger surface and operates independently. Splitting keeps each skill's instructions short and targeted.
+- **Why skills, not MCP servers?** Every skill here wraps an existing CLI tool (`git bz`, `prove`, `cypress`, `koha-qa.pl`, `yarn build`, file scaffolding) or orchestrates other agents. Skills are markdown + workflow guidance with no process to run; MCP would be heavier with no capability gain.
+- **Why split into many skills rather than one mega-skill?** Each has a distinct trigger surface and operates independently. Splitting keeps each skill's instructions short and targeted, and lets them compose (e.g. `koha-review` references `koha-qa` and `koha-prove`).
 - **Component list in `koha-bz`** — the inline list is a hint, not authoritative. Bugzilla is case- and spelling-strict; the skill explicitly tells the model to ask the user when unsure rather than guess.
+- **Soft dependency on `pr-review-toolkit`** for `koha-review` — see the Recommended companion plugins section. Hard-coding the agents into this plugin would duplicate maintenance; depending on a published plugin keeps responsibilities separate.
 
 ## Contributing
 
