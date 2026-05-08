@@ -2,13 +2,19 @@
 
 Claude Code skills for contributing to [Koha ILS](https://koha-community.org/).
 
-Bundles three skills:
+Bundles nine skills:
 
 | Skill | Triggers | What it does |
 |-------|----------|--------------|
 | `koha-bz` | "file a Koha bug", "submit patch to bugzilla", "git bz" | Creates a Bugzilla bug on `bugs.koha-community.org` and attaches commits non-interactively via `git bz`. Encodes the `-y` flag and required-field workflow that otherwise hangs the agent. |
+| `koha-bz-fetch` | "fetch bug NNNNN", "what does bug NNNNN say" | Pulls a bug's summary, description, test plan, and recent comments from bugs.koha-community.org by bug number. |
 | `koha-prove` | "run koha tests", "prove t/..." | Runs Perl tests inside the KTD container (`kohadev-koha-1`). Never runs `prove` on the host. |
-| `atomicupdate` | "create atomicupdate", "scaffold a DB change for bug NNNNN" | Scaffolds a Koha atomicupdate `.pl` file with the standard skeleton, marks it executable, and reminds about the wider DBIC schema workflow. |
+| `koha-cypress` | "run cypress", "e2e tests" | Runs Cypress E2E tests from the host (KTD exposes the UI on localhost). Container fallback included. |
+| `koha-qa` | "run qa", "qa script", "before submit" | Runs `koha-qa.pl` inside KTD with `-v 2 --more-tests`. Triages real failures vs known KTD limitations. |
+| `koha-build` | "yarn build", "rebuild", "after editing swagger" | Builds CSS / JS / OpenAPI inside KTD. Reminds about `restart_all` after swagger YAML changes (the #1 trap). |
+| `atomicupdate` | "create atomicupdate", "scaffold a DB change for bug NNNNN" | Scaffolds a Koha atomicupdate `.pl` file, makes it executable, and reminds about the wider workflow. |
+| `koha-schema-apply` | "apply schema change", "regenerate dbic" | End-to-end DB workflow: runs `updatedatabase.pl`, `dbic --force`, and reminds about manual `is_boolean` / relation edits below the marker line. |
+| `koha-syspref` | "add a system preference", "new syspref" | Generates the atomicupdate INSERT and the matching `.pref` YAML entry so the syspref shows up in the admin UI. |
 
 ## Requirements
 
