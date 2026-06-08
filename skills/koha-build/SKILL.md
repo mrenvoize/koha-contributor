@@ -23,8 +23,7 @@ If the user didn't specify and edited several file types, default to
 ## Run
 
 ```bash
-docker exec --user kohadev-koha --workdir /kohadevbox/koha -i kohadev-koha-1 \
-  bash -c 'yarn build'
+ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'yarn build'
 ```
 
 Substitute `yarn css:build`, `yarn js:build`, or `yarn build:prod` as needed.
@@ -36,8 +35,7 @@ the running Mojolicious workers cache the compiled spec. Restart services
 after the build:
 
 ```bash
-docker exec --user kohadev-koha --workdir /kohadevbox/koha -i kohadev-koha-1 \
-  bash -c 'yarn build && restart_all'
+ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'yarn build && restart_all'
 ```
 
 Without `restart_all` the API will still serve the old spec and your tests
@@ -49,8 +47,7 @@ common "build looks fine but tests fail" trap.
 For tight feedback loops while editing SCSS or JS, run in the background:
 
 ```bash
-docker exec --user kohadev-koha --workdir /kohadevbox/koha -i kohadev-koha-1 \
-  bash -c 'yarn css:watch'   # or yarn js:watch
+ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'yarn css:watch'   # or yarn js:watch
 ```
 
 The user should run watch mode in a separate terminal — don't background it

@@ -37,8 +37,7 @@ available on the host.
 
 4. Container fallback (only if host Cypress fails):
    ```bash
-   docker exec --user kohadev-koha --workdir /kohadevbox/koha -i kohadev-koha-1 \
-     bash -c 'yarn cypress run --spec <path>'
+   ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'yarn cypress run --spec <path>'
    ```
 
 ## Narrowing during development

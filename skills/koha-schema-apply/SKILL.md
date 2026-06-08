@@ -21,8 +21,7 @@ If any of these isn't true, stop and tell the user what's missing — the
 ## Step 1 — Run the atomicupdate
 
 ```bash
-docker exec --user kohadev-koha --workdir /kohadevbox/koha -i kohadev-koha-1 \
-  bash -c 'perl installer/data/mysql/updatedatabase.pl'
+ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'perl installer/data/mysql/updatedatabase.pl'
 ```
 
 Expect to see the `say_success` / `say_warning` lines from the atomicupdate.
@@ -32,8 +31,7 @@ surface the error — do NOT continue to dbic regeneration on a broken DB.
 ## Step 2 — Regenerate DBIC schema
 
 ```bash
-docker exec --user kohadev-koha --workdir /kohadevbox/koha -i kohadev-koha-1 \
-  bash -c 'dbic --force'
+ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'dbic --force'
 ```
 
 This rewrites the auto-generated portions of `Koha/Schema/Result/*.pm`.

@@ -22,8 +22,7 @@ If output is non-empty, stop and tell the user.
 ## Run
 
 ```bash
-docker exec --user kohadev-koha --workdir /kohadevbox/koha -i kohadev-koha-1 \
-  bash -c '/kohadevbox/qa-test-tools/koha-qa.pl -v 2 --more-tests'
+ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run '/kohadevbox/qa-test-tools/koha-qa.pl -v 2 --more-tests'
 ```
 
 `-v 2` is the recommended verbosity. `--more-tests` enables the slower

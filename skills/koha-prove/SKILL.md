@@ -13,17 +13,16 @@ Steps:
    Common prefixes to strip: any path ending in `/koha/`.
 2. Verify the container is running:
    ```
-   docker ps --filter name=kohadev-koha-1 --format '{{.Names}}'
+   docker ps --filter name=${KTD_INSTANCE:-kohadev}-koha-1 --format '{{.Names}}'
    ```
-   If empty, report: "KTD container (kohadev-koha-1) is not running. Start it with: ktd up" and stop.
+   If empty, report: "KTD container is not running. Start it with: ktd up" and stop.
 3. Run the test:
    ```
-   docker exec --user kohadev-koha --workdir /kohadevbox/koha -i kohadev-koha-1 bash -c 'prove -v PATH'
+   ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'prove -v PATH'
    ```
    where PATH is the normalized path.
 4. Report the full output including pass/fail summary and any test failures.
 
 Notes:
 - Never run `prove` on the host — it lacks the Koha Perl environment and will fail.
-- The container name `kohadev-koha-1` is the KTD default. If `docker ps` shows a different name, use that instead.
 - `prove -r t/db_dependent/` runs the full DB-dependent suite (slow); for quick iteration, target a single file or subdirectory.
