@@ -7,6 +7,14 @@ File a Koha Bugzilla bug and attach commits using `git bz` non-interactively.
 
 Arguments: $ARGUMENTS
 
+## CRITICAL: Never invoke proactively
+
+**This skill must only run when the user explicitly asks to file a bug or attach
+patches** (e.g. "file the bug", "attach the patches", "run git bz", "submit to
+Bugzilla"). Never invoke it automatically after completing code changes — even
+if the commits look ready. Always wait for an explicit instruction from the
+user before taking any Bugzilla action.
+
 ## Why this skill exists
 
 `git bz create` and `git bz attach` default to interactive prompts and will hang
