@@ -64,6 +64,28 @@ Test plan:
 Sponsored-by: <if applicable>
 ```
 
+### Text formatting — plain text, no markdown
+
+Bugzilla renders the summary and description as **plain text**, not markdown.
+Get the encoding right or comments come out mangled:
+
+- **No markdown.** Don't use `**bold**`, `` `code` ``, `#` headings, `[]()`
+  links, or `-`/`*` bullet syntax for emphasis — they render literally as the
+  raw characters. Plain numbered/dashed lists in the test plan are fine because
+  they read naturally as text, not because Bugzilla formats them.
+- **ASCII punctuation only.** Use straight quotes (`'` `"`), `-` for hyphens
+  and `--` for dashes, and `...` for ellipses. Do NOT use "smart" typographic
+  characters — curly quotes (`'` `'` `"` `"`), en/em dashes (`–` `—`), or the
+  ellipsis glyph (`…`). These are the "oddly encoded characters in the middle
+  of words" that show up when an editor or model auto-substitutes them.
+- **UTF-8 is allowed where it carries meaning** — e.g. an author's name with
+  accents (`José`, `Müller`) or a genuine non-Latin string. Keep it as real
+  UTF-8; never paste mojibake (`Ã©`, `â€"`) — if you see that, the text was
+  double-encoded and must be fixed before submitting.
+- Before running create/attach, **scan the summary and `--desc` body for any
+  non-ASCII byte** and confirm each one is intentional UTF-8, not a stray smart
+  quote or mojibake.
+
 ## Step 2 — Dry run first
 
 Always run with `--dry-run` first to surface duplicates and missing-field
