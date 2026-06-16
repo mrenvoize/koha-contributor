@@ -1,7 +1,7 @@
 {
   "name": "koha-contributor",
   "version": "0.4.1",
-  "description": "Skills for contributing to Koha ILS: file Bugzilla bugs via git bz, run Perl tests inside KTD, and scaffold atomicupdate files.",
+  "description": "Skills for contributing to Koha ILS: file Bugzilla bugs via git bz with plain-text ASCII formatting, run Perl tests inside KTD, and scaffold atomicupdate files.",
   "author": {
     "name": "Martin Renvoize",
     "email": "martin.renvoize@openfifth.co.uk"

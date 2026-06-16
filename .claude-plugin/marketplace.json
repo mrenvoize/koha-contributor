@@ -1,6 +1,6 @@
 {
   "name": "koha-contributor",
-  "description": "Claude Code skills for contributing to Koha ILS: file Bugzilla bugs, run Perl tests in KTD, scaffold atomicupdate files.",
+  "description": "Claude Code skills for contributing to Koha ILS: file Bugzilla bugs with plain-text ASCII formatting, run Perl tests in KTD, scaffold atomicupdate files.",
   "owner": {
     "name": "Martin Renvoize"
   },
@@ -8,7 +8,7 @@
     {
       "name": "koha-contributor",
       "source": "./",
-      "description": "Skills for contributing to Koha ILS: file Bugzilla bugs via git bz, run Perl tests inside KTD, and scaffold atomicupdate files.",
+      "description": "Skills for contributing to Koha ILS: file Bugzilla bugs via git bz with plain-text ASCII formatting, run Perl tests inside KTD, and scaffold atomicupdate files.",
       "version": "0.4.1",
       "author": {
         "name": "Martin Renvoize",
