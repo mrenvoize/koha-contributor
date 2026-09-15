@@ -28,6 +28,11 @@ or absurdly large (>50 files).
 
 If the range is empty: stop and tell the user.
 
+If `main..HEAD` fails with exit 128 / "unknown revision" — common in a
+`git worktree` off a shared bare clone — check `git remote -v` and retry
+with `upstream/main..HEAD` (or whatever the actual remote is called)
+instead of assuming `main` resolves.
+
 ## Step 2 — Categorise touched files
 
 Bucket the changed paths so we can target review correctly:
@@ -84,6 +89,14 @@ the relevant file list, and a focused brief.
 Each agent runs read-only. If unavailable, fall through to direct review by
 the model itself for that bucket.
 
+**Known gap:** an automated pass like this one is weaker than an
+interactive human reviewer at catching two things in particular —
+issues in a "Depends on" bug that hasn't landed yet (transitive
+dependencies), and whether backend behaviour actually matches what the
+patch claims (as opposed to matching it on paper). Call this out in the
+final summary rather than presenting automated coverage as equivalent to
+a full interactive review.
+
 ## Step 5 — Direct Koha-specific checks (model performs)
 
 While agents run (or after, if you can't run in parallel), the model does
@@ -138,6 +151,12 @@ won't catch:
 - Don't add parallel fields when an existing field can evolve — match
   existing API contract idioms.
 - Breaking changes (renamed/removed fields) need a deprecation path or are flagged in commit message.
+- If the range includes a merge/rebase that resolved a conflict against
+  another in-flight bug touching the same API client or registration
+  point, check for leftover duplicates — conflict resolution can keep
+  both sides' additions (e.g. two client instances registered for the
+  same resource) instead of consolidating to one. Look for a later
+  "consolidate" commit as a signal this already bit the author once.
 
 ## Step 6 — Synthesise findings
 
