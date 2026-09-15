@@ -67,3 +67,8 @@ matters for starting work.
   Allow up to 30s before timing out.
 - **Test plan missing** — many old bugs have no formatted test plan.
   Note this in the output rather than hallucinating one.
+- **`git bz show` fails even though `~/.git-bz` looks populated** — check
+  the tracker config, not just credentials: `git config
+  bz-tracker.bugs.koha-community.org.path` and `.https` must be set (e.g.
+  `/bugzilla3` and `true`). Missing tracker config is a separate failure
+  mode from missing/stale auth.

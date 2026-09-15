@@ -145,13 +145,57 @@ git bz attach -y NNNNN main..HEAD
 
 Or for a fixed count: `git bz attach -y NNNNN HEAD~3..HEAD`.
 
+## Attaching updates obsoletes prior attachments by default
+
+Since `git-bz` 1.2.0, `git bz attach` marks the patches it supersedes as
+obsolete **and tags the corresponding bug comments** — this is the default,
+not opt-in. Re-attaching a revised series will silently obsolete the
+previous one; that's usually what you want, but say so explicitly to the
+user before attaching a revision so it isn't a surprise.
+
+- `git bz attach --no-comment HEAD` — attach without adding a comment at all.
+- `git bz attach --no-obsolete-comments HEAD` — still obsoletes superseded
+  attachments, but skips tagging the bug comments about it.
+
+## Claiming QA contact / changing status non-interactively
+
+`git bz edit --non-interactive` (added in 1.3.0) updates a bug without
+opening an editor — useful for claiming QA contact before testing a patch:
+
+```bash
+git bz edit --non-interactive --qa-contact "$(git config user.email)" NNNNN
+```
+
+It requires at least one field option: `--status`, `--comment`,
+`--patch-complexity`, `--sponsorship`, `--sponsor`, `--depends`,
+`--assignee`, `--qa-contact`, or `--obsolete`.
+
 ## Common failure modes
 
 - **Process hangs / no output** — missing `-y`. Kill it and retry with `-y`.
 - **`Missing required field`** — one of `--product/--comp/--version/--summary/--desc` was omitted. Re-run with all five.
 - **`No such component`** — component name is case-sensitive and must match Bugzilla exactly. Run a dry-run with a guess and read the error to find valid values, or ask the user.
-- **Auth failure** — `~/.git-bz` is missing or stale. Tell the user to run `git bz --help` interactively to refresh credentials; do not attempt to write that file from the skill.
+- **Auth failure** — usually `~/.git-bz` is missing or stale; tell the user
+  to run `git bz --help` interactively to refresh credentials. But if
+  credentials look fine and requests still fail, check the tracker config
+  itself is set — `git bz` needs `bz-tracker.<host>.path` and `.https`
+  configured (e.g. `git config bz-tracker.bugs.koha-community.org.path
+  /bugzilla3` and `git config bz-tracker.bugs.koha-community.org.https
+  true`), not just credentials. Do not attempt to write auth files from the
+  skill.
 - **Branch is `master`, not `main`** — Koha community uses `main`. The local default may say `master` but it's stale. Use `main..HEAD` for the attach range.
+- **`main..HEAD` fails with exit 128 / "unknown revision"** — common in a
+  `git worktree` off a shared bare clone when the upstream remote isn't
+  literally named `origin`/`main`. Check `git remote -v` and fall back to
+  `upstream/main..HEAD` (or whatever the actual remote is called) rather
+  than assuming `main` resolves.
+- **Rewriting history on a branch that's already been attached** — once
+  commits are attached to Bugzilla, don't rebase/force-push over them
+  without a reason. Old attachments reference specific SHAs; if those
+  commits get garbage-collected after a rebase, you're left manually
+  reconstructing a "needs rebase" patch series later. Prefer new commits
+  (or a clearly-superseding rebase you immediately re-attach) over silently
+  losing the old SHAs.
 
 ## Output to user
 
