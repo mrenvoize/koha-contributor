@@ -2,12 +2,13 @@
 
 Claude Code skills for contributing to [Koha ILS](https://koha-community.org/).
 
-Bundles ten skills:
+Bundles eleven skills:
 
 | Skill | Triggers | What it does |
 |-------|----------|--------------|
 | `koha-bz` | "file a Koha bug", "submit patch to bugzilla", "git bz" | Creates a Bugzilla bug on `bugs.koha-community.org` and attaches commits non-interactively via `git bz`. Encodes the `-y` flag and required-field workflow that otherwise hangs the agent. |
 | `koha-bz-fetch` | "fetch bug NNNNN", "what does bug NNNNN say" | Pulls a bug's summary, description, test plan, and recent comments from bugs.koha-community.org by bug number. |
+| `koha-bz-apply` | "apply bug NNNNN", "pull down this patch to test it" | Applies a bug's patches and its "Depends on" chain via `git bz apply --non-interactive`, including the worktree `core.bare` fix that otherwise breaks `git am`. |
 | `koha-prove` | "run koha tests", "prove t/..." | Runs Perl tests inside the KTD container (`kohadev-koha-1`). Never runs `prove` on the host. |
 | `koha-cypress` | "run cypress", "e2e tests" | Runs Cypress E2E tests from the host (KTD exposes the UI on localhost). Container fallback included. |
 | `koha-qa` | "run qa", "qa script", "before submit" | Runs `koha-qa.pl` inside KTD with `-v 2 --more-tests`. Triages real failures vs known KTD limitations. |

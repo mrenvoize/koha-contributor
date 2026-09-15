@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A Claude Code **plugin** that ships ten markdown-only skills for contributing to [Koha ILS](https://koha-community.org/). There is no application code, no build, no test suite, and no lint config — every file under `skills/<name>/SKILL.md` is shipped verbatim to end users via the plugin marketplace.
+A Claude Code **plugin** that ships eleven markdown-only skills for contributing to [Koha ILS](https://koha-community.org/). There is no application code, no build, no test suite, and no lint config — every file under `skills/<name>/SKILL.md` is shipped verbatim to end users via the plugin marketplace.
 
 Plugin manifest: `.claude-plugin/plugin.json` (single source of truth for `version`). Marketplace entry: `.claude-plugin/marketplace.json` (must be kept in sync with `plugin.json` — same `version`, `description`, `keywords`).
 
@@ -16,6 +16,22 @@ The skills are deliberately split rather than bundled into one mega-skill, and s
 - `koha-schema-apply` is the follow-up step after `atomicupdate` has scaffolded a `.pl` file and the SQL has been filled in.
 - `koha-syspref` writes both an atomicupdate `INSERT` and the matching `admin/preferences/*.pref` YAML — both edits are required for the syspref to appear in the staff UI.
 - `koha-build` reminds about `restart_all` after swagger YAML changes — `yarn build` alone is not enough. Don't drop that reminder.
+- `koha-bz-apply` is the inverse of `koha-bz`: pulling someone else's patchset down (by bug number) rather than pushing your own up. It's the natural precursor to `koha-review`/`koha-qa` when reviewing other people's work.
+
+## The worktree `core.bare` trap (cross-cutting)
+
+KTD's `run.sh` sets `extensions.worktreeConfig=true` on the shared bare
+repo. Once that's set, every `git worktree` off that bare repo inherits
+`core.bare=true` unless it gets its own per-worktree override — this
+breaks `git am` (and hence `git bz apply`) with "fatal: this operation
+must be run in a work tree" regardless of `cwd`. This has bitten two
+separate pieces of Koha tooling independently (`koha-reviewer` and
+`koha-testing-docker` itself), so treat it as a known, recurring
+environment quirk, not a one-off bug. The fix (`git config
+extensions.worktreeConfig true; git config --worktree core.bare false`)
+lives in `koha-bz-apply` since that's where the failure actually
+surfaces, but keep it in mind if another skill starts doing `git am`,
+`git rebase`, or similar work-tree-requiring operations in a worktree.
 
 ## Container vs host commands (the central design constraint)
 
