@@ -112,6 +112,15 @@ won't catch:
 - New `.pm` should be in `Koha/`, not `C4/`. New code in `C4/` needs strong justification.
 - New code uses DBIx::Class (`Koha::Foos->search(...)`) not raw DBI (`$dbh->prepare`).
 - Avoid `GetMember`, `ModMember`, etc. — use `Koha::Patrons->find->update`.
+- New `Koha::Object(s)` classes document `_type` and `object_class` with the
+  standard POD, copied verbatim: `=head3`, under `=head2 Internal methods`
+  (after the public methods), with the class-agnostic sentences "Returns the
+  name of the DBIx::Class result source this class maps to." /
+  "Returns the name of the Koha::Object class this set is made of." Flag
+  class-specific wording, `=head2` headings, empty headings, or public methods
+  placed under `Internal methods`. See
+  `references/koha-handbook/koha_objects_system.md` ("Standard POD for `_type`
+  and `object_class`").
 
 ### Templates (TT)
 - All user-controlled output is escaped: `[% var | html %]` (or `| uri` in URLs).
