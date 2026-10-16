@@ -1,6 +1,6 @@
 ---
 name: koha-syspref
-description: Add a new Koha system preference. Generates the atomicupdate INSERT and edits the matching admin/preferences/*.pref YAML so the syspref appears in the staff UI. Arguments: bug number, preference name, and a hint about which preferences page (e.g. patrons, circulation, opac).
+description: Add a new Koha system preference. Generates the atomicupdate INSERT, adds the row to installer/data/mysql/mandatory/sysprefs.sql for fresh installs, and edits the matching admin/preferences/*.pref YAML so the syspref appears in the staff UI. Arguments: bug number, preference name, and a hint about which preferences page (e.g. patrons, circulation, opac).
 ---
 
 Scaffold a new Koha system preference end-to-end.
@@ -58,7 +58,22 @@ Notes:
 - `type` is one of `YesNo`, `Choice`, `Integer`, `Textarea`, `free`,
   `Float`, `Upload`, `Lang`, `Date`.
 
-## Step 2 — Add to the .pref YAML
+## Step 2 — Add to mandatory/sysprefs.sql (fresh installs)
+
+The atomicupdate only covers upgrades. New installs load
+`installer/data/mysql/mandatory/sysprefs.sql`, so the pref must be added
+there too or it won't exist on a fresh install.
+
+Since Bug 41834 this file only lists `variable` and `value`:
+
+```sql
+('PrefName','defaultvalue'),
+```
+
+Insert the row in **strict alphabetical order** by variable name (QA
+checks this) and keep the trailing comma / final semicolon intact.
+
+## Step 3 — Add to the .pref YAML
 
 Open the chosen `.pref` file and add an entry under an appropriate section.
 The `.pref` files use Koha's bespoke YAML-ish format. A typical entry:
@@ -94,9 +109,9 @@ For Integer / free:
 
 Match indentation exactly — these files are whitespace-sensitive.
 
-## Step 3 — Verify
+## Step 4 — Verify
 
-After both edits:
+After all three edits:
 1. Run the atomicupdate via the `koha-schema-apply` skill (or
    `perl installer/data/mysql/updatedatabase.pl` directly).
 2. Load the admin preferences page in the browser and confirm the new
@@ -107,5 +122,6 @@ After both edits:
 
 Report:
 - Atomicupdate file path + the INSERT block added.
+- `sysprefs.sql` row added (and its neighbours, to show ordering).
 - `.pref` file path + the entry added.
 - Reminder to apply via `koha-schema-apply` and verify in the admin UI.

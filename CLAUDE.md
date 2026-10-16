@@ -14,7 +14,7 @@ The skills are deliberately split rather than bundled into one mega-skill, and s
 
 - `koha-review` references `koha-qa` and `koha-prove` in its workflow, and **soft-depends** on the `pr-review-toolkit` plugin (Anthropic) for the specialist review agents (`code-reviewer`, `silent-failure-hunter`, `pr-test-analyzer`, `comment-analyzer`, `type-design-analyzer`). If `pr-review-toolkit` isn't installed, `koha-review` falls back to direct review — keep that fallback path working when editing.
 - `koha-schema-apply` is the follow-up step after `atomicupdate` has scaffolded a `.pl` file and the SQL has been filled in.
-- `koha-syspref` writes both an atomicupdate `INSERT` and the matching `admin/preferences/*.pref` YAML — both edits are required for the syspref to appear in the staff UI.
+- `koha-syspref` writes an atomicupdate `INSERT` (upgrades), a row in `installer/data/mysql/mandatory/sysprefs.sql` (fresh installs), and the matching `admin/preferences/*.pref` YAML (staff UI) — all three are required.
 - `koha-build` reminds about `restart_all` after swagger YAML changes — `yarn build` alone is not enough. Don't drop that reminder.
 - `koha-bz-apply` is the inverse of `koha-bz`: pulling someone else's patchset down (by bug number) rather than pushing your own up. It's the natural precursor to `koha-review`/`koha-qa` when reviewing other people's work.
 

@@ -144,7 +144,7 @@ won't catch:
 - Test files have `use Test::NoWarnings;` at the top.
 
 ### System preferences
-- New syspref has: an atomicupdate INSERT, an entry in the right `.pref` file, a default value, a type, an explanation.
+- New syspref has: an atomicupdate INSERT, a row in `installer/data/mysql/mandatory/sysprefs.sql` (alphabetical; missing it means fresh installs lack the pref), an entry in the right `.pref` file, a default value, a type, an explanation.
 - Default behaviour preserves existing behaviour (don't change defaults silently).
 
 ### API contract evolution
