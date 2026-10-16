@@ -36,6 +36,11 @@ git config --worktree core.bare false
 This is a per-worktree fix — a freshly created worktree needs it applied
 once before its first `git am`/`git bz apply`.
 
+## Where to apply
+
+If the user works per bug (see `koha-workflow`), run this from that bug's
+worktree, not the main clone, and create the worktree first if needed.
+
 ## Run
 
 ```bash
