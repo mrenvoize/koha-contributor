@@ -16,16 +16,28 @@ available on the host.
 
 ## Steps
 
-1. Verify KTD is up and the staff interface responds:
+1. Work out the UI URLs. Koha's `cypress.config.ts` reads
+   `KOHA_INTRANET_URL` (default `http://localhost:8081`) and
+   `KOHA_OPAC_URL` (default `http://localhost:8080`). A KTD instance
+   started with `--proxy` is not on those ports — its UI is at
+   `http://<name>-intra.localhost` (staff) and `http://<name>.localhost`
+   (OPAC); `ktd --list` shows running instances. For a proxied instance:
    ```bash
-   curl -sf -o /dev/null http://localhost:8081/ && echo OK || echo "KTD not responding on :8081"
+   export KOHA_INTRANET_URL=http://<name>-intra.localhost
+   export KOHA_OPAC_URL=http://<name>.localhost
+   ```
+
+2. Verify KTD is up and the staff interface responds:
+   ```bash
+   STAFF_URL="${KOHA_INTRANET_URL:-http://localhost:8081}"
+   curl -sf -o /dev/null "$STAFF_URL/" && echo OK || echo "KTD not responding at $STAFF_URL"
    ```
    If that fails, tell the user to start KTD (`ktd up`) and stop.
 
-2. Normalise the spec path. Strip any leading absolute path so it's
+3. Normalise the spec path. Strip any leading absolute path so it's
    repo-relative (e.g. `t/cypress/integration/Biblio/bookingsModal_spec.ts`).
 
-3. Run Cypress headlessly from the host (Koha repo root):
+4. Run Cypress headlessly from the host (Koha repo root):
    ```bash
    npx cypress run --spec "<path>"
    ```
@@ -35,7 +47,7 @@ available on the host.
    npx cypress run --spec "t/cypress/integration/Acquisitions/"
    ```
 
-4. Container fallback (only if host Cypress fails):
+5. Container fallback (only if host Cypress fails):
    ```bash
    ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'yarn cypress run --spec <path>'
    ```
@@ -58,8 +70,10 @@ committing — they will fail QA / leave dead tests.
 - **`Cypress could not verify…has not exited cleanly`** — KTD is up but the
   app errored on load. Hit the URL in a browser to see the actual error;
   fix the underlying app issue, not the Cypress invocation.
-- **`Failed to connect to localhost`** — KTD is down or on a different port.
-  Check `docker ps` for the actual port mapping (default 8081 staff, 8080 OPAC).
+- **`Failed to connect to localhost`** — KTD is down, on a different port,
+  or running behind the proxy. Check `docker ps` for the port mapping
+  (default 8081 staff, 8080 OPAC) or `ktd --list` for proxied instances,
+  and set `KOHA_INTRANET_URL` / `KOHA_OPAC_URL` accordingly.
 - **Authentication tests failing locally but passing in CI** — Koha test
   database fixtures may be stale; run `ktd --restart` or rebuild KTD.
 
