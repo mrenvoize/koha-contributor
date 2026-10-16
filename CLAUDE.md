@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A Claude Code **plugin** that ships eleven markdown-only skills for contributing to [Koha ILS](https://koha-community.org/). There is no application code, no build, no test suite, and no lint config — every file under `skills/<name>/SKILL.md` is shipped verbatim to end users via the plugin marketplace.
+A Claude Code **plugin** that ships twelve markdown-only skills for contributing to [Koha ILS](https://koha-community.org/). There is no application code, no build, no test suite, and no lint config — every file under `skills/<name>/SKILL.md` is shipped verbatim to end users via the plugin marketplace.
 
 Plugin manifest: `.claude-plugin/plugin.json` (single source of truth for `version`). Marketplace entry: `.claude-plugin/marketplace.json` (must be kept in sync with `plugin.json` — same `version`, `description`, `keywords`).
 
@@ -16,6 +16,7 @@ The skills are deliberately split rather than bundled into one mega-skill, and s
 - `koha-schema-apply` is the follow-up step after `atomicupdate` has scaffolded a `.pl` file and the SQL has been filled in.
 - `koha-syspref` writes an atomicupdate `INSERT` (upgrades), a row in `installer/data/mysql/mandatory/sysprefs.sql` (fresh installs), and the matching `admin/preferences/*.pref` YAML (staff UI) — all three are required.
 - `koha-build` reminds about `restart_all` after swagger YAML changes — `yarn build` alone is not enough. Don't drop that reminder.
+- `koha-workflow` documents the two supported setups: one shared `kohadev` instance (what every other skill defaults to), or one worktree + one `--proxy --name bug_NNNNN` instance per bug. KTD-driving skills must keep honouring `${KTD_INSTANCE:-kohadev}` so the per-bug setup works. Don't hardcode `kohadev`, `localhost:8081`, or the main clone path in new skills.
 - `koha-bz-apply` is the inverse of `koha-bz`: pulling someone else's patchset down (by bug number) rather than pushing your own up. It's the natural precursor to `koha-review`/`koha-qa` when reviewing other people's work.
 
 ## The worktree `core.bare` trap (cross-cutting)
