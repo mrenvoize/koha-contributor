@@ -38,9 +38,19 @@ jobs:
           AFTER=$(git rev-parse HEAD)
           if [ "$BEFORE" = "$AFTER" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+          # The handbook ships with the plugin, and the plugin cache is keyed
+          # by version, so a sync needs a patch bump to reach installed copies.
+          # release.yml tags and releases it once this lands on main.
+          new=$(jq -r .version .claude-plugin/plugin.json | awk -F. '{print $1"."$2"."$3+1}')
+          jq --arg v "$new" '.version = $v' .claude-plugin/plugin.json > "$RUNNER_TEMP/p.json"
+          mv "$RUNNER_TEMP/p.json" .claude-plugin/plugin.json
+          jq --arg v "$new" '.plugins[0].version = $v' .claude-plugin/marketplace.json > "$RUNNER_TEMP/m.json"
+          mv "$RUNNER_TEMP/m.json" .claude-plugin/marketplace.json
+          git commit -am "chore: bump version to $new for handbook sync"
 
       - name: Push branch and open PR
         if: steps.pull.outputs.changed == 'true'

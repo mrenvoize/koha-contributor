@@ -1,0 +1,28 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.claude-plugin/plugin.json'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag and release if this version is new
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          v="v$(jq -r .version .claude-plugin/plugin.json)"
+          if gh release view "$v" >/dev/null 2>&1; then
+            echo "$v already released"
+            exit 0
+          fi
+          gh release create "$v" --target "$GITHUB_SHA" --title "$v" --generate-notes

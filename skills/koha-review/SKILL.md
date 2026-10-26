@@ -86,6 +86,7 @@ the relevant file list, and a focused brief.
 | Auth, permissions, input handling, file uploads, SQL building | `security-review` skill **or** `pr-review-toolkit:code-reviewer` with security focus | XSS in templates, SQLi in raw DBI, missing permission checks, CSRF |
 | Significant comment additions or doc edits | `pr-review-toolkit:comment-analyzer` | Accuracy, decay risk, references to current state |
 
+Pick the handbook docs from Step 5 first, so each brief can name them.
 Each agent runs read-only. If unavailable, fall through to direct review by
 the model itself for that bucket.
 
@@ -97,11 +98,41 @@ patch claims (as opposed to matching it on paper). Call this out in the
 final summary rather than presenting automated coverage as equivalent to
 a full interactive review.
 
-## Step 5 — Direct Koha-specific checks (model performs)
+## Step 5 — Handbook conventions (model performs, and briefs agents with)
+
+The vendored koha-handbook is the source of truth for conventions: it
+changes upstream and is re-synced weekly, so **do not restate its rules in
+this skill** — read the relevant docs and review against them. The handbook
+lives at `${CLAUDE_PLUGIN_ROOT}/references/koha-handbook/` (if that path is
+missing, e.g. skills copied without the plugin, say so in the summary and
+rely on the checks below).
+
+Read only the docs matching the buckets from Step 2, and pass the same
+paths to each specialist agent in Step 4 so they check against them too:
+
+| Buckets touched | Handbook docs |
+|-----------------|---------------|
+| Any Perl | `coding_guidelines.md` |
+| `Koha::Object(s)` classes, DBIC schema | `koha_objects_system.md`, `database_naming_conventions.md` |
+| REST controllers / Swagger | `coding_guidelines_api.md`, `koha_rest_api_architecture.md` |
+| Templates | `koha_template_toolkit.md`, `coding_guidelines.md` (Templates, Security) |
+| SQL schema / atomicupdates | `database_naming_conventions.md`, `coding_guidelines.md` (Database) |
+| Tests | `koha_testing_framework.md` |
+| Background jobs | `background_jobs.md` |
+| Plugin code | `plugin_architecture.md` |
+| New abstractions | `koha_design_patterns.md` and `patterns/*.md` |
+
+If a touched area has no doc here, grep the handbook (`README.md` is the
+index) before concluding there is no convention. Cite findings with the
+doc and section (e.g. `koha_objects_system.md`, "Standard POD for `_type`
+and `object_class`"). A handbook rule is **Important** unless the doc says
+otherwise.
+
+## Step 6 — Direct Koha-specific checks (model performs)
 
 While agents run (or after, if you can't run in parallel), the model does
-these checks directly. These are the things a generic code reviewer
-won't catch:
+these checks directly. These cover what the handbook doesn't, or what is
+cheap to verify mechanically:
 
 ### Bug branch / commit hygiene
 - Each commit subject starts with `Bug NNNNN: ` (Koha convention).
@@ -158,7 +189,7 @@ won't catch:
   same resource) instead of consolidating to one. Look for a later
   "consolidate" commit as a signal this already bit the author once.
 
-## Step 6 — Synthesise findings
+## Step 7 — Synthesise findings
 
 Merge agent reports + direct checks. Deduplicate. Bucket as:
 
@@ -174,7 +205,7 @@ For each finding, give:
 
 Group by file when there are multiple findings in the same file.
 
-## Step 7 — Verdict
+## Step 8 — Verdict
 
 End with one of:
 
