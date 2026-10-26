@@ -34,6 +34,25 @@ asked again.
 If they choose **shared**, stop here. The other skills already target
 `kohadev`.
 
+## Shortcut — `kd` is installed
+
+If `command -v kd` succeeds (the `koha-dev-scripts` wrapper), prefer it
+over Steps 2–3 and the manual clean-up. It uses worktrees under
+`$KOHA_DIR/core/worktrees/<name>`, applies the `core.bare` fix, boots a
+proxied instance named `<name>`, and exports `KTD_INSTANCE`/`SYNC_REPO` in
+its tmux dev window:
+
+```bash
+kd up bug_NNNNN [--bz]       # worktree + KTD instance; --bz applies the bug's patches
+kd wt bug_NNNNN [--bz]       # worktree only
+kd shell bug_NNNNN           # container shell
+kd down bug_NNNNN            # stop instance and remove worktree (branch kept)
+kd list                      # all worktrees, Bugzilla status, container state
+```
+
+Steps 4 and "Resuming" still apply; skip Steps 2–3 and use `kd down` for
+clean-up (it keeps the branch unless `--rm=full`; confirm before using that).
+
 ## Step 2 — Per-bug: create or reuse the worktree
 
 Ask for (or infer from the user's setup) the main clone (usually
