@@ -1,0 +1,31 @@
+name: Version check
+
+on:
+  pull_request:
+    paths:
+      - 'skills/**'
+      - '.claude-plugin/**'
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: plugin.json and marketplace.json agree
+        run: |
+          p=$(jq -r .version .claude-plugin/plugin.json)
+          m=$(jq -r '.plugins[0].version' .claude-plugin/marketplace.json)
+          [ "$p" = "$m" ] || { echo "::error::plugin.json ($p) and marketplace.json ($m) versions differ"; exit 1; }
+
+      - name: Version bumped when skills change
+        run: |
+          base="origin/${{ github.base_ref }}"
+          if git diff --quiet "$base"...HEAD -- skills/; then
+            exit 0
+          fi
+          old=$(git show "$base:.claude-plugin/plugin.json" | jq -r .version)
+          new=$(jq -r .version .claude-plugin/plugin.json)
+          [ "$old" != "$new" ] || { echo "::error::skills/ changed but version is still $old; the plugin cache is keyed by version, so installs will not update"; exit 1; }

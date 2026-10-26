@@ -69,7 +69,8 @@ Keep skill bodies short and prescriptive. They are loaded into the user's contex
 
 ## Editing rules of thumb
 
-- **Bumping version**: edit `plugin.json` and `marketplace.json` together, then commit.
+- **Bumping version**: edit `plugin.json` and `marketplace.json` together, then commit. Any change under `skills/` needs a bump — Claude Code keys its plugin cache by version, so unbumped changes never reach installed copies (`.github/workflows/version-check.yml` enforces this on PRs).
+- **Releasing**: after the bump lands on `main`, tag it (`git tag -a vX.Y.Z -m "vX.Y.Z"`), push the tag, and run `gh release create vX.Y.Z --generate-notes`.
 - **Adding a skill**: create `skills/<name>/SKILL.md` with frontmatter, then add a row to the table in `README.md` (the table is the human-facing skill index — if it falls out of sync the plugin looks broken).
 - **`koha-bz` component list** is intentionally a hint, not authoritative — Bugzilla is case- and spelling-strict, so the skill tells the model to ask the user when unsure rather than guess. Don't "fix" this by making the list authoritative.
 - The `koha-bz` `-y` flag and required-field flags are the most common failure mode (interactive prompts hang the agent). Don't remove them.
