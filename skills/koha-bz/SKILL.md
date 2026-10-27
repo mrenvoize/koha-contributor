@@ -1,6 +1,6 @@
 ---
 name: koha-bz
-description: File a Koha bug on bugs.koha-community.org and attach commits non-interactively via git bz. Use when the user wants to submit a patch, file a bug, or open a bz/Bugzilla ticket for Koha. Arguments (optional, free-form): summary or component hints. Without args, derive details from the current branch and HEAD commits.
+description: "File a Koha bug on bugs.koha-community.org and attach commits non-interactively via git bz. Use when the user wants to submit a patch, file a bug, or open a bz/Bugzilla ticket for Koha. Arguments (optional, free-form): summary or component hints. Without args, derive details from the current branch and HEAD commits."
 ---
 
 File a Koha Bugzilla bug and attach commits using `git bz` non-interactively.

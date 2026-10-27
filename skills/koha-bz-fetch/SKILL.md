@@ -1,6 +1,6 @@
 ---
 name: koha-bz-fetch
-description: Fetch a Koha Bugzilla bug's summary, description, status, and recent comments from bugs.koha-community.org by bug number. Use before starting work on a bug to surface the test plan and any prior discussion. Argument: a Koha bug number (e.g. 33501).
+description: "Fetch a Koha Bugzilla bug's summary, description, status, and recent comments from bugs.koha-community.org by bug number. Use before starting work on a bug to surface the test plan and any prior discussion. Argument: a Koha bug number (e.g. 33501)."
 ---
 
 Fetch a Koha Bugzilla bug by number.

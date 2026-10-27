@@ -1,6 +1,6 @@
 ---
 name: koha-syspref
-description: Add a new Koha system preference. Generates the atomicupdate INSERT, adds the row to installer/data/mysql/mandatory/sysprefs.sql for fresh installs, and edits the matching admin/preferences/*.pref YAML so the syspref appears in the staff UI. Arguments: bug number, preference name, and a hint about which preferences page (e.g. patrons, circulation, opac).
+description: "Add a new Koha system preference. Generates the atomicupdate INSERT, adds the row to installer/data/mysql/mandatory/sysprefs.sql for fresh installs, and edits the matching admin/preferences/*.pref YAML so the syspref appears in the staff UI. Arguments: bug number, preference name, and a hint about which preferences page (e.g. patrons, circulation, opac)."
 ---
 
 Scaffold a new Koha system preference end-to-end.
