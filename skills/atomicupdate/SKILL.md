@@ -1,6 +1,6 @@
 ---
 name: atomicupdate
-description: Create a new Koha atomicupdate file for a bug. Arguments: bug number (e.g. 12345) and a short description of the DB change.
+description: "Create a new Koha atomicupdate file for a bug. Arguments: bug number (e.g. 12345) and a short description of the DB change."
 ---
 
 Create an atomicupdate file for Koha bug $ARGUMENTS.

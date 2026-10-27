@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A Claude Code **plugin** that ships twelve markdown-only skills for contributing to [Koha ILS](https://koha-community.org/). There is no application code, no build, no test suite, and no lint config — every file under `skills/<name>/SKILL.md` is shipped verbatim to end users via the plugin marketplace.
+A Claude Code **plugin** that ships fourteen markdown-only skills for contributing to [Koha ILS](https://koha-community.org/). There is no application code, no build, no test suite, and no lint config — every file under `skills/<name>/SKILL.md` is shipped verbatim to end users via the plugin marketplace.
 
 Plugin manifest: `.claude-plugin/plugin.json` (single source of truth for `version`). Marketplace entry: `.claude-plugin/marketplace.json` (must be kept in sync with `plugin.json` — same `version`, `description`, `keywords`).
 
@@ -18,6 +18,8 @@ The skills are deliberately split rather than bundled into one mega-skill, and s
 - `koha-build` reminds about `restart_all` after swagger YAML changes — `yarn build` alone is not enough. Don't drop that reminder.
 - `koha-workflow` documents the two supported setups: one shared `kohadev` instance (what every other skill defaults to), or one worktree + one `--proxy --name bug_NNNNN` instance per bug. KTD-driving skills must keep honouring `${KTD_INSTANCE:-kohadev}` so the per-bug setup works. Don't hardcode `kohadev`, `localhost:8081`, or the main clone path in new skills.
 - `koha-bz-apply` is the inverse of `koha-bz`: pulling someone else's patchset down (by bug number) rather than pushing your own up. It's the natural precursor to `koha-review`/`koha-qa` when reviewing other people's work.
+- `koha-dashboard-queue` reads dashboard queues (personal Bugzilla key in `KOHA_DASHBOARD_API_KEY`, never printed) and feeds any workflow: it hands bugs to `koha-bz-fetch`, `koha-bz-apply`, `koha-review`, `koha-qa`, `koha-prove` and `koha-rm-queue`.
+- `koha-rm-queue` is the release-manager loop over the "Ready to push" queue. It calls `koha-dashboard-queue`, `koha-bz-apply`, `koha-review`, `koha-qa`, `koha-prove`, `koha-bz` and `koha-workflow`; signing, pushing and Bugzilla changes sit behind explicit maintainer gates, so keep those gates intact when editing. It ships companion files in its own directory (`bugzilla-update.md`, `rm-recipes.md`).
 
 ## The worktree `core.bare` trap (cross-cutting)
 
@@ -60,7 +62,7 @@ When citing handbook content from a skill, link to the vendored path (e.g. `refe
 
 ## SKILL.md conventions
 
-Every skill is a single markdown file with YAML frontmatter. Required fields: `name` (matching the directory) and `description`. The `description` is what the agent matches against when deciding whether to invoke the skill — write it as a behavioural specification: include trigger phrases ("Use when the user says X"), expected arguments, and what the skill actually does. Examples to model new skills on:
+Every skill is a `SKILL.md` with YAML frontmatter (it may ship companion files in its own directory, e.g. `skills/koha-rm-queue/*.md`; the manual `cp -r skills/*` install copies them too). Required fields: `name` (matching the directory) and `description`. The `description` is what the agent matches against when deciding whether to invoke the skill — write it as a behavioural specification: include trigger phrases ("Use when the user says X"), expected arguments, and what the skill actually does. Examples to model new skills on:
 
 - `skills/koha-bz/SKILL.md` — argument-driven, encodes a non-interactive CLI invocation that otherwise hangs.
 - `skills/koha-review/SKILL.md` — orchestrator, fans out to specialist agents based on file types in the diff.
