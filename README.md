@@ -37,8 +37,9 @@ environment variables, exported in the shell Claude Code runs in:
 - `KOHA_DASHBOARD_API_KEY` — a Bugzilla API key (Bugzilla -> Preferences ->
   API Keys). The dashboard shows what the key's owner can see in Bugzilla.
   The skills only send it in a request header and never print, log or store it.
-  Without it they can fall back to anonymous access, which lists public bugs
-  only (restricted/security bugs are missing).
+  Without it `koha-dashboard-queue` can fall back to anonymous access, but
+  only if you agree: that lists public bugs only (restricted/security bugs
+  are missing). `koha-rm-queue` never falls back; it stops and asks for the key.
 - `KOHA_DASHBOARD_URL` — optional, defaults to `https://dashboard.koha-community.org`.
 - `KOHA_DASHBOARD_USER_ID` — optional, non-secret numeric Bugzilla user id,
   used for the per-user queues (Failed QA, Patch doesn't apply, ...); the skill
@@ -46,6 +47,44 @@ environment variables, exported in the shell Claude Code runs in:
 
 Two separate credentials are involved: `git bz` authenticates with your
 Bugzilla login (`~/.git-bz`), while the dashboard needs the separate API key above.
+
+#### Keeping the key available
+
+Keep the key out of your shell profile and out of chat. A private file works
+well:
+
+```bash
+# once: store the key, typed silently so it never shows on screen or in history
+mkdir -p ~/.config/koha-dashboard && chmod 700 ~/.config/koha-dashboard
+read -rs k && (umask 077; printf %s "$k" > ~/.config/koha-dashboard/api-key); unset k
+```
+
+then load it from your shell startup:
+
+```bash
+[ -r ~/.config/koha-dashboard/api-key ] && export KOHA_DASHBOARD_API_KEY="$(<~/.config/koha-dashboard/api-key)"
+```
+
+Where that line goes matters. `~/.zshrc` and `~/.bashrc` are only read by
+*interactive* shells, so a variable exported only there is missing from
+anything that starts Claude Code through a non-interactive command: for
+example the agent window that `kd tmux` opens (tmux runs it as `zsh -c claude`,
+which reads `~/.zshenv` but not `~/.zshrc`). For zsh put the line in
+`~/.zshenv`; otherwise export the variable in the shell before launching
+Claude Code. Restart the Claude Code session after changing it.
+
+Check it without printing the key:
+
+```bash
+[ -n "$KOHA_DASHBOARD_API_KEY" ] && echo "key is set"
+curl -s -o /dev/null -w '%{http_code}\n' \
+  --config <(printf 'header = "X-BUGZILLA-API-KEY: %s"\n' "$KOHA_DASHBOARD_API_KEY") \
+  https://dashboard.koha-community.org/api/queues/needs-push
+```
+
+`200` means the key works; `401` means the dashboard rejected it (wrong or
+revoked key). Revoke a key on the same Bugzilla preferences page where you
+created it.
 
 ### Recommended companion plugins
 
