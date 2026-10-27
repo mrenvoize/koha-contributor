@@ -166,7 +166,7 @@ Bugzilla, **except the noted `get_bug` gap**:
 | What | Call / field |
 |------|--------------|
 | Read status + release version | `read_bug($id)` above — an explicit GET with `include_fields=id,status,cf_release_version` on the client's session |
-| Read comments | `$client->get_comments($id)` — arrayref of `{text, creator, creation_time, ...}` |
+| Read comments | `$client->get_comments($id)` — arrayref of `{text, creator, creation_time, ...}`; entries carry `text` (the client POD says `body`, the helper handles both) |
 | Post a comment | `$client->update_bug($id, comment => { body => $text })` |
 | Set status | `$client->update_bug($id, status => 'Pushed to main')` — valid only from `Passed QA` |
 | "Version(s) released in" | `$client->update_bug($id, cf_release_version => '<current>, <version>')` — a comma-separated string; write it only after reading the current value, appending |

@@ -53,7 +53,7 @@ With the maintainer's approval:
 
 1. **Back up**: `git branch -f backup/pre_replay_<date> HEAD`.
 2. **Replay**: `git reset --hard <base>` (the commit below the range), then
-   `git cherry-pick <sha>...` in the new order — or, for a squash of your
+   `git cherry-pick <sha1> <sha2> <sha3>` (the commits of the range, listed in the new order; replace each `<shaN>` with a real commit id from the backup branch and add or drop ids as needed) — or, for a squash of your
    own noise commits, cherry-pick the logical commit and apply each fixup
    with `git cherry-pick -n <fixup>` + `git commit --amend --no-edit`.
 3. **Verify the final tree is identical**:

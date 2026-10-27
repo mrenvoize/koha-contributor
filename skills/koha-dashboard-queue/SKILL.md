@@ -146,7 +146,9 @@ way; `roadmap_target` is unset when `null`, `""` or `"---"`; and
 `missing_release_notes` is a count that may arrive as a string.
 
 ```bash
-SCRATCH=...   # the directory from the fetch step
+# Before running: set SCRATCH to the directory the fetch step printed (the
+# second value on its last line); this fails loudly if it is unset.
+: "${SCRATCH:?set SCRATCH to the directory printed by the fetch step}"
 cat > "$SCRATCH/show.jq" <<'EOF'
 def show:
   to_entries[] | .key as $i | .value

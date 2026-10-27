@@ -192,7 +192,8 @@ For each bug:
 
 ## Gate 1 — signing (the maintainer signs, never you)
 
-When the maintainer ends the batch ("call it there", "I'll sign"):
+When the maintainer ends the batch ("call it there", "let's push", "I'll sign"; these
+phrases only start Gate 1, they never approve a push):
 
 1. **Clean commits.** List every commit with its trailers:
    `git log upstream/main..HEAD --format='%h %s%n    %(trailers:key=Signed-off-by,valueonly,separator=; )'`.
@@ -217,8 +218,8 @@ When the maintainer ends the batch ("call it there", "I'll sign"):
 ## Gate 2 — pushing (only after "I've signed" AND "push")
 
 The push instruction must be **in, or after, the message that says they have
-signed**. Gate 1 trigger phrases ("let's push", the opening request) are NOT
-Gate 2 approval. If the message only says they have signed, show the dry-run
+signed**. The Gate 1 batch-end phrases ("call it there", "let's push", "I'll sign")
+and the opening request are NOT Gate 2 approval. If the message only says they have signed, show the dry-run
 and ask. Then:
 
 1. **Verify signatures**:
