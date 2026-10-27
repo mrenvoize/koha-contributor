@@ -19,7 +19,7 @@ the token itself. The snippet scrubs it in a `BEGIN` block, and you run it
 with the variable removed as well:
 
 ```bash
-env -u DEBUG perl -I"$GITBZ_LIB" <scratchpad>/bz_pushed.pl --preview
+env -u DEBUG perl ${GITBZ_LIB:+-I"$GITBZ_LIB"} <scratchpad>/bz_pushed.pl --preview
 ```
 
 ## Locating the perl-git-bz lib

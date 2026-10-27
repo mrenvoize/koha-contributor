@@ -87,7 +87,11 @@ anything the opening message already answered:
    bug); "no" means add a trailer only on a per-bug instruction.
 5. Stop after every bug, or only on a problem or follow-up? (Problem-only
    still never amends, signs or touches Bugzilla without the stated
-   instruction.)
+   instruction.) Choosing "yes" with problem-only mode: a bug that passed
+   review with no problems and no follow-ups counts as approved for the
+   standing "yes" sign-off only if the maintainer's answer said so
+   explicitly when choosing problem-only; otherwise (or if unclear) stop at
+   each bug until the maintainer approves it.
 
 The maintainer's name and email come from `git config` at run time — never
 hard-code them or write them into committed files.
@@ -146,7 +150,10 @@ For each bug:
 
 4. **Wait** per the stop-mode parameter. Do not start the next bug, amend
    anything, or touch Bugzilla until the maintainer answers (problem-only
-   mode lets you proceed to the next bug after a clean pass, nothing more).
+   mode lets you proceed to the next bug after a clean pass, nothing more;
+   a standing "yes" sign-off is applied to such a bug only if the maintainer
+   said so explicitly when choosing problem-only mode, otherwise stop and
+   wait for approval).
 
 ### Instructions the maintainer gives (act without re-explaining)
 

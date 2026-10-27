@@ -9,8 +9,8 @@ Fetch a dashboard queue and present it, in the dashboard's order.
 Arguments: $ARGUMENTS — optional. Examples:
 - `needs-push` (or "ready to push") → `/api/queues/needs-push`
 - `needs-qa`, `needs-signoff`, ... → the matching team queue
-- `user 249 needs-work/failed-qa` → one section of a user's dashboard
-- `user 249` → discovery: list that user's groups and sections
+- `user <id> needs-work/failed-qa` → one section of a user's dashboard
+- `user <id>` → discovery: list that user's groups and sections
 - empty → ask which queue (offer the list below)
 
 ## Pre-flight
