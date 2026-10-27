@@ -2,7 +2,7 @@
 
 Claude Code skills for contributing to [Koha ILS](https://koha-community.org/).
 
-Bundles twelve skills:
+Bundles fourteen skills:
 
 | Skill | Triggers | What it does |
 |-------|----------|--------------|
@@ -18,13 +18,34 @@ Bundles twelve skills:
 | `koha-schema-apply` | "apply schema change", "regenerate dbic" | End-to-end DB workflow: runs `updatedatabase.pl`, `dbic --force`, and reminds about manual `is_boolean` / relation edits below the marker line. |
 | `koha-syspref` | "add a system preference", "new syspref" | Generates the atomicupdate INSERT and the matching `.pref` YAML entry so the syspref shows up in the admin UI. |
 | `koha-review` | "QA this patchset", "review my branch", "review last N commits" | Auto-detects patchset scope, fans out specialist review agents in parallel, applies a Koha-specific checklist, and synthesises Critical / Important / Suggestion findings with file:line citations. |
+| `koha-dashboard-queue` | "what's in Ready to push", "show my Failed QA", "list the Needs QA queue" | Reads a queue or a user's section from the dashboard.koha-community.org JSON API with your personal Bugzilla API key, presents it in the dashboard's order, and hands bugs to the other skills. Read-only. |
+| `koha-rm-queue` | "work the Ready to push queue", "release manager queue", "push the QA'd bugs" | Release-manager loop over the Ready to push queue: apply, QA review, RM follow-ups, DBRev, sign-off, push and Bugzilla updates, with the maintainer gating signing, pushing and every Bugzilla change. |
 
 ## Requirements
 
 - **Claude Code** with plugin support
 - **`git bz`** installed and authenticated (`git bz --help` once interactively to populate `~/.git-bz`) — for `koha-bz` and `koha-bz-fetch`
 - **KTD** ([Koha Testing Docker](https://gitlab.com/koha-community/koha-testing-docker)) running, with container name `kohadev-koha-1` — for `koha-prove`, `koha-cypress`, `koha-qa`, `koha-build`, `koha-schema-apply`
+- **`curl` and `jq`**, plus a personal Bugzilla API key in `KOHA_DASHBOARD_API_KEY` — for `koha-dashboard-queue` and `koha-rm-queue` (see below)
 - A local Koha checkout — for `atomicupdate`, `koha-syspref`, `koha-review` (run from the repo root)
+
+### Dashboard credentials (`koha-dashboard-queue`, `koha-rm-queue`)
+
+These skills read dashboard.koha-community.org through its JSON API and use
+environment variables, exported in the shell Claude Code runs in:
+
+- `KOHA_DASHBOARD_API_KEY` — a Bugzilla API key (Bugzilla -> Preferences ->
+  API Keys). The dashboard shows what the key's owner can see in Bugzilla.
+  The skills only send it in a request header and never print, log or store it.
+  Without it they can fall back to anonymous access, which lists public bugs
+  only (restricted/security bugs are missing).
+- `KOHA_DASHBOARD_URL` — optional, defaults to `https://dashboard.koha-community.org`.
+- `KOHA_DASHBOARD_USER_ID` — optional, non-secret numeric Bugzilla user id,
+  used for the per-user queues (Failed QA, Patch doesn't apply, ...); the skill
+  asks once if it is unset.
+
+Two separate credentials are involved: `git bz` authenticates with your
+Bugzilla login (`~/.git-bz`), while the dashboard needs the separate API key above.
 
 ### Recommended companion plugins
 
@@ -81,7 +102,9 @@ Copy the skills into your user-global skills dir:
 cp -r ~/Projects/koha-contributor/skills/* ~/.claude/skills/
 ```
 
-This gets the skills working but skips version tracking via the plugin manager.
+A skill may ship companion files next to its `SKILL.md` (for example
+`skills/koha-rm-queue/*.md`); `cp -r` copies those subdirectory files too, so the
+command above installs them. This gets the skills working but skips version tracking via the plugin manager.
 
 ## Verifying
 
