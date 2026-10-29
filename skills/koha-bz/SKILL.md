@@ -153,9 +153,38 @@ not opt-in. Re-attaching a revised series will silently obsolete the
 previous one; that's usually what you want, but say so explicitly to the
 user before attaching a revision so it isn't a surprise.
 
-- `git bz attach --no-comment HEAD` — attach without adding a comment at all.
 - `git bz attach --no-obsolete-comments HEAD` — still obsoletes superseded
   attachments, but skips tagging the bug comments about it.
+
+### Keep the default attach comment
+
+**Never pass `--no-comment`.** The comment `git bz attach` posts carries the
+full commit message, including the test plan, and that is how testers and QA
+see what changed and how to test it. Omitting it leaves the bug thread
+without those details. (`git bz attach` still has the flag, but this skill
+does not use it.)
+
+If an extra explanation is useful (for example why a patch was reworked after
+a failed QA), post it as a separate comment in addition to the attach comment:
+
+```bash
+git bz edit --non-interactive --comment "<text>" NNNNN
+```
+
+### Obsoleting attachments whose subject changed
+
+With `-y`, `git bz attach` only auto-obsoletes earlier attachments whose
+summary exactly matches the new commit subject. If the subject changed, the
+old attachment stays current. Obsolete it explicitly, and set the status if
+the revision moves the bug on (for example back to `Needs Signoff`):
+
+```bash
+git bz edit --non-interactive --obsolete <attachment-id> \
+  --status "Needs Signoff" NNNNN
+```
+
+When attaching a revision, pass only the commit(s) that changed (e.g.
+`HEAD`) rather than a range that re-attaches commits already on the bug.
 
 ## Claiming QA contact / changing status non-interactively
 

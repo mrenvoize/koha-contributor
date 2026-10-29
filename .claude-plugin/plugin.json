@@ -1,6 +1,6 @@
 {
   "name": "koha-contributor",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Skills for contributing to Koha ILS: file Bugzilla bugs via git bz with plain-text ASCII formatting, run Perl tests inside KTD, scaffold atomicupdate files, and read the dashboard queues or work the release-manager Ready to push queue.",
   "author": {
     "name": "Martin Renvoize",
