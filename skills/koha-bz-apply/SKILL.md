@@ -72,6 +72,20 @@ git bz apply --non-interactive --follow-status "Signed Off,Passed QA" NNNNN
   the same `git bz apply` command. It resumes the rest of the dependency
   chain from where it left off — no need to restart from the first bug.
 
+- **A patch you already resolved by hand is re-applied.** If you fixed an
+  earlier `git am` conflict manually and committed it, a later `git bz apply`
+  to pull the rest of the series re-fetches every non-obsolete attachment,
+  including that one, and it conflicts again (the tree no longer matches its
+  base). That isn't a real conflict: use `git bz apply --skip`, not
+  `--continue`.
+- **Patch rot on an older bug.** When the conflict is real, check
+  `git show HEAD:<path>` for the current structure - the surrounding code may
+  have been refactored, not just shifted - port the patch's intent by hand,
+  `git add`, then `GIT_EDITOR=true git am --continue`. Fold the resolution into
+  the author's commit, as in an ordinary rebase.
+- **Don't use `kd up --bz` without `--non-interactive`** - it can loop forever
+  and fill `/tmp` (see `koha-workflow`).
+
 ## After applying
 
 Suggest the appropriate next skill: `koha-qa` to run the QA script,

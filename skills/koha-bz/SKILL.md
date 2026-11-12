@@ -15,6 +15,21 @@ Bugzilla"). Never invoke it automatically after completing code changes — even
 if the commits look ready. Always wait for an explicit instruction from the
 user before taking any Bugzilla action.
 
+## Confirm before anything posts
+
+Everything this skill does is outward-facing and a posted comment cannot be
+edited. So, even once the user has asked for it:
+
+- Before `git bz attach`, show the commit list and `--stat` (and the diff if
+  asked) and wait for an explicit go-ahead. This applies even when the bug
+  number is known and the commits look ready.
+- Show any **extra** comment (`git bz edit --comment`, thanks, rework
+  explanations) as a draft in chat, plain text with real line breaks, and post
+  it only after the user okays it. The default comment `git bz attach` posts
+  (the commit message and test plan) needs no separate draft.
+- Treat status changes as one-way: Bugzilla refuses to move a bug backward
+  (e.g. "In Discussion" back to NEW), so don't set a status speculatively.
+
 ## Why this skill exists
 
 `git bz create` and `git bz attach` default to interactive prompts and will hang
@@ -51,10 +66,13 @@ If the user didn't supply the summary/component, propose values derived from
 the branch name and HEAD commit subject, then confirm with the user before
 running. Do not invent a component — ask if uncertain.
 
-Description body should follow the Koha template:
+Description body (comment 0) should state the **problem** and why it matters,
+with the root cause if known. Do not open with "This patch adds/fixes ..." -
+no patch is attached yet when the bug is created, so narrating one is
+misleading. The "how" belongs in the commit message attached later.
 
 ```
-This patch <does X>.
+<What is broken or missing, who it affects, why it matters.>
 
 Test plan:
 1. <step>
@@ -63,6 +81,15 @@ Test plan:
 
 Sponsored-by: <if applicable>
 ```
+
+### Test plans are librarian-facing
+
+The test plan (here and in each commit message) is what a librarian signing
+off follows: concrete staff-interface or OPAC steps - which page, what to
+click or enter, what to see before and after. List `prove t/...` only as an
+extra step after those. For security patches a UI plan is still not enough:
+the security team expects a browser or `curl` reproduction with before, after
+and control (see `koha-security-verify`).
 
 ### Text formatting — plain text, no markdown
 
@@ -131,8 +158,16 @@ Capture the bug number from the output line:
 ## Step 4 — Rewrite commit subjects (if needed)
 
 Koha requires every commit subject to start with `Bug NNNNN: `. If commits
-were authored before the bug existed, offer to rebase and prepend. Do NOT
-rewrite published commits without user confirmation.
+were authored before the bug existed, offer to reword them (interactive
+rebase is not available here - use the replay technique in `koha-clean-series`).
+Do NOT rewrite published commits without user confirmation.
+
+## Step 4b — Clean the series first
+
+Before the **first** attach, run the `koha-clean-series` checks: squash
+self-caught fixes into the commit that introduced them, and make sure
+`main..HEAD` holds only this bug's commits. "(QA follow-up)" commits are for
+fixes made after reviewers have seen a patch, not before.
 
 ## Step 5 — Attach commits
 
@@ -144,6 +179,11 @@ git bz attach -y NNNNN main..HEAD
 ```
 
 Or for a fixed count: `git bz attach -y NNNNN HEAD~3..HEAD`.
+
+`git bz attach` refuses a commit whose message references a **different** bug
+number, even with `-y` (the mismatch prompt hangs under non-interactive
+stdin). When a fix reuses another bug's patch, attach only your own commit to
+the dependent bug and link the two with `--depends` and a comment (below).
 
 ## Attaching updates obsoletes prior attachments by default
 
@@ -185,6 +225,32 @@ git bz edit --non-interactive --obsolete <attachment-id> \
 
 When attaching a revision, pass only the commit(s) that changed (e.g.
 `HEAD`) rather than a range that re-attaches commits already on the bug.
+
+## Editing an existing bug safely
+
+- **`--depends` REPLACES the whole list; it does not add.** Passing one bug id
+  removes every other dependency (perl-git-bz computes removals as old list
+  minus new list). On a large omnibus bug this once removed 57 dependents and
+  emailed everyone CC'd. To add a dependent: fetch the current `depends_on`
+  (`git bz show --json NNNNN`), add the new ids, pass **all** of them, assert
+  the count is old plus new, and diff the list afterwards. Setting `--depends`
+  on a bug that has none is safe. If a parent of the new bug already sits
+  under the omnibus, don't touch the omnibus at all.
+- **Build repeated `--depends` args with an array/loop.** zsh (the shell the
+  Bash tool uses here) does NOT word-split an unquoted `$var`, so a list in a
+  variable arrives as one multi-line value.
+- **Comments posted with `git bz edit --comment`:** lines starting with `#`
+  are dropped, and on perl-git-bz builds without the issue #70 fix (not merged
+  upstream yet) every blank line is stripped too, turning a multi-paragraph
+  comment into a wall of text. Never start a comment line with `#`; prefer
+  short comments, or let `git bz attach` post the long text. After posting,
+  read it back (`git bz show --last 1 NNNNN`) and compare with the draft.
+- **Fields the CLI doesn't expose** (e.g. `see_also`): reuse the
+  authenticated client, `GitBz::Commands->new->{client}->update_bug($id,
+  see_also => { add => [$url] })`, from a git repo; don't hand-roll a login.
+- **Amended a commit that is already attached?** After `git commit --amend`
+  plus `git bz attach`, the old attachment may stay non-obsolete. List the
+  bug's attachments (`git bz show NNNNN`) and obsolete the stale one.
 
 ## Claiming QA contact / changing status non-interactively
 

@@ -13,16 +13,36 @@ Validate the argument is a positive integer. If the user passed a URL like
 `https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=NNNNN`, extract
 the number from the `id` parameter.
 
-## Method 1 — git bz (preferred if available)
+## Method 1 — git bz show (preferred if available)
 
-If `git bz` is configured (`~/.git-bz` exists), use it:
+If `git bz` is configured (`~/.git-bz` exists) and is perl-git-bz 1.4.0 or
+newer (`git bz show --help` works), use it:
 
 ```bash
-git bz show NNNNN
+git bz show NNNNN              # details, description, all comments, attachments
+git bz show --last 3 NNNNN     # description plus only the last 3 comments
+git bz show --no-comments NNNNN
+git bz show --json NNNNN       # bug, comments and attachments as JSON
 ```
 
-This dumps the bug header, full description, and recent comments to stdout
-using the user's authenticated session — works for restricted bugs too.
+It uses the user's authenticated session, so restricted (security) bugs the
+user can see are readable too. Prefer `--last N` for long threads.
+
+On an older build with no `show` subcommand, `EDITOR=cat GIT_EDITOR=cat git
+bz edit NNNNN` prints the bug's metadata and exits with "No changes made"
+(posts nothing). For the comment thread of a restricted bug, reuse perl-git-bz's
+already-authenticated client from inside a git repo (it reads the tracker
+credentials from git config), instead of hand-rolling a login:
+
+```perl
+use lib '<perl-git-bz checkout>/lib';
+use GitBz::Commands;
+my $comments = GitBz::Commands->new->{client}->get_comments($bug_id);
+```
+
+If you must hand-roll `rest/login`, URL-encode the login and password first
+(a stored password can contain `&`, which silently truncates it and returns a
+plain 401 that looks like wrong credentials). Never print the credentials.
 
 ## Method 2 — Bugzilla REST API (fallback, no auth needed for public bugs)
 
@@ -61,8 +81,8 @@ matters for starting work.
 
 ## Common failures
 
-- **404 from REST API** — bug doesn't exist, or it's restricted (private
-  security bug). Fall back to Method 1 if `git bz` is configured.
+- **401/404 from REST API** — bug doesn't exist, or it's restricted (private
+  security bug). Use Method 1 if `git bz` is configured.
 - **Slow response** — bugs.koha-community.org is sometimes sluggish.
   Allow up to 30s before timing out.
 - **Test plan missing** — many old bugs have no formatted test plan.

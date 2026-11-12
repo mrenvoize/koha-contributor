@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A Claude Code **plugin** that ships fourteen markdown-only skills for contributing to [Koha ILS](https://koha-community.org/). There is no application code, no build, no test suite, and no lint config — every file under `skills/<name>/SKILL.md` is shipped verbatim to end users via the plugin marketplace.
+A Claude Code **plugin** that ships seventeen skills (markdown, plus a few helper scripts in `skills/koha-review-walkthrough/`) for contributing to [Koha ILS](https://koha-community.org/). There is no application code to build, no test suite, and no lint config — every file under `skills/<name>/` is shipped verbatim to end users via the plugin marketplace. The one exception to "markdown only" is `koha-review-walkthrough`, which ships a Playwright driver template and two small Python helpers; dogfood those (see below) when you change them.
 
 Plugin manifest: `.claude-plugin/plugin.json` (single source of truth for `version`). Marketplace entry: `.claude-plugin/marketplace.json` (must be kept in sync with `plugin.json` — same `version`, `description`, `keywords`).
 
@@ -20,6 +20,9 @@ The skills are deliberately split rather than bundled into one mega-skill, and s
 - `koha-bz-apply` is the inverse of `koha-bz`: pulling someone else's patchset down (by bug number) rather than pushing your own up. It's the natural precursor to `koha-review`/`koha-qa` when reviewing other people's work.
 - `koha-dashboard-queue` reads dashboard queues (personal Bugzilla key in `KOHA_DASHBOARD_API_KEY`, never printed) and feeds any workflow: it hands bugs to `koha-bz-fetch`, `koha-bz-apply`, `koha-review`, `koha-qa`, `koha-prove` and `koha-rm-queue`.
 - `koha-rm-queue` is the release-manager loop over the "Ready to push" queue. It calls `koha-dashboard-queue`, `koha-bz-apply`, `koha-review`, `koha-qa`, `koha-prove`, `koha-bz` and `koha-workflow`; signing, pushing and Bugzilla changes sit behind explicit maintainer gates, so keep those gates intact when editing. It ships companion files in its own directory (`bugzilla-update.md`, `rm-recipes.md`).
+- `koha-review` Step 7 (configuration combinations, "actions at a distance") hands UI-flow cases to `koha-review-walkthrough`, which records before/after videos from an unpatched and a patched KTD instance and builds a compare player. The Playwright MCP sandbox has no `require`, `import` or file access, so `build-driver.py` injects `scenarios.json` into `driver.js` and the generated file must sit under the MCP's allowed roots. Don't "simplify" that into reading a config file from the driver.
+- `koha-security-verify` is the verification recipe for restricted security bugs; `koha-bz` points at it for security test plans. `koha-clean-series` is the pre-attach step `koha-bz` points at (no interactive rebase: detached cherry-pick replay, proven by an empty `git diff old-tip HEAD`).
+- `koha-bz`, `koha-bz-fetch`, `koha-workflow`, `koha-qa` and `koha-review` carry hard-won gotchas (the `--depends` set-not-add trap, the `${KTD_INSTANCE:-kohadev}` prefix-assignment trap, `kd up --bz` needing `--non-interactive`, `restart_all` after any Perl change). Keep them when editing; each cost real time or caused real damage.
 
 ## The worktree `core.bare` trap (cross-cutting)
 
@@ -85,5 +88,7 @@ There is no automated test harness. To dogfood a change, install the plugin loca
 ```bash
 cp -r ~/Projects/koha-contributor/skills/* ~/.claude/skills/
 ```
+
+For `koha-review-walkthrough`, also exercise `build-driver.py` and `make-compare.py` against a small fixture (a local static page for the driver, a few `.webm` files for the compare builder) and syntax-check the generated JS (`node --check`); there is no CI for them.
 
 Or via the plugin marketplace (`/plugin marketplace add ...`, `/plugin install koha-contributor`) once changes are pushed.

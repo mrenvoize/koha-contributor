@@ -1,0 +1,49 @@
+{
+  "meta": {
+    "title": "Bug NNNNN: check-in before and after",
+    "before_label": "BEFORE: main (legacy page)",
+    "after_label": "AFTER: patched (new page)"
+  },
+  "root": "/abs/path/to/koha/core/notes/NNNNN-walkthrough",
+  "size": { "width": 1920, "height": 1080 },
+  "pause": 5000,
+  "cardMs": 7000,
+  "login": { "path": "/cgi-bin/koha/mainpage.pl", "user": "koha", "pass": "koha" },
+  "sides": {
+    "before": { "base": "http://walk_main-intra.kohadev.home", "label": "BEFORE: main", "color": "#ffb454", "bg": "#3a2612" },
+    "after":  { "base": "http://bug_NNNNN-intra.kohadev.home", "label": "AFTER: patched", "color": "#7fd1ff", "bg": "#12263a" }
+  },
+  "baselinePrefs": { "AutomaticItemReturn": 1, "TransfersBlockCirc": 0 },
+  "scenarios": {
+    "S01": {
+      "section": "Scenarios (one pass each)",
+      "title": "Plain check-in",
+      "pre": "Item is on loan at its home library; nothing special.",
+      "what": "A row appears and the item is available again.",
+      "tag": "same",
+      "note": "Identical outcome and flow.",
+      "steps_before": [
+        { "goto": "/cgi-bin/koha/circ/returns.pl", "waitFor": "#barcode", "caption": "Open the legacy check-in page" },
+        { "type": "#barcode", "text": "WT1-S01", "caption": "Scanning WT1-S01" },
+        { "click": "input[type=submit]", "nav": true },
+        { "observe": "result", "rows": "#checkedintable tbody tr" }
+      ],
+      "steps_after": [
+        { "goto": "/cgi-bin/koha/circ/checkin.pl", "waitFor": "#barcode-input", "caption": "Open the new check-in page" },
+        { "type": "#barcode-input", "text": "WT1-S01", "caption": "Scanning WT1-S01" },
+        { "click": "button:has-text('Check in')" },
+        { "waitForSelector": "table tbody tr" },
+        { "observe": "result", "rows": "table tbody tr" }
+      ]
+    },
+    "S09-ON": {
+      "section": "Preference combinations",
+      "title": "Item from another library, AutomaticItemReturn on",
+      "pre": "Item belongs to Fairfield and is returned at Centerville.",
+      "what": "With the preference on, Koha transfers it home without asking.",
+      "prefs": { "AutomaticItemReturn": 1, "TransfersBlockCirc": 0 },
+      "steps_before": [ { "goto": "/cgi-bin/koha/circ/returns.pl", "waitFor": "#barcode" } ],
+      "steps_after":  [ { "goto": "/cgi-bin/koha/circ/checkin.pl", "waitFor": "#barcode-input" } ]
+    }
+  }
+}

@@ -62,6 +62,35 @@ The script reports per-commit. Triage flagged issues into:
   `Test::NoWarnings`' END block still runs and reports a bad plan. Harmless
   on machines that have the module.
 
+### Known false positives (verify, then work around)
+
+- **`forbidden_patterns` scans every changed file, not just Perl.** A literal
+  `_(` in a Cypress `.ts` payload (e.g. a crafted malicious parameter name
+  such as `filter_(SELECT(1))_begin`) is flagged as the Perl gettext rule.
+  Rephrase the payload (a quote-based SQLi shape like `' OR '1'='1` works);
+  the test's point doesn't depend on parentheses.
+- **`git_manipulation`** fires when a follow-up commit renames or moves a
+  file added by the previous commit in the range. Don't move files in QA
+  follow-ups; keep them small.
+- **The worktree pre-commit hook** rejects tabs in `debian/rules` (a Makefile,
+  tabs are required) and added lines containing `warn` in `debian/scripts/*`
+  (the shell helper, not Perl's `warn`). For commits touching only those, use
+  `git commit --no-verify`, say so in the summary, and let `koha-qa.pl` be the
+  real check.
+- **`prettier --write` on a `.tt` file can corrupt unrelated markup** (it once
+  commented out a real `</head>`/`<body>` pair in `auth.tt`). `git diff` after
+  running it on any template and hand-revert everything outside your hunk.
+
+### Warnings are findings
+
+Don't wave a warning through as "non-blocking". Grep the QA and test output for
+`uninitialized` and other warnings. A warning your patch introduces breaks CI
+as soon as any test renders that path under `Test::NoWarnings` (bug 43782 was
+pushed with "uninitialized $session_id" noted as cosmetic, then failed
+`t/db_dependent/Koha/Plugins/TemplateIncludePathHook.t`). For template or
+plugin-hook changes also run `prove -r t/db_dependent/Koha/Template
+t/db_dependent/Koha/Plugins`. If the warning pre-dates the patch, say so.
+
 ## Atomicupdate output conventions (related, often flagged together)
 
 Use `Koha::Installer::Output qw(say_success say_warning say_failure say_info)`:
