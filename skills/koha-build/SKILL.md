@@ -42,6 +42,14 @@ Without `restart_all` the API will still serve the old spec and your tests
 will fail with confusing schema-mismatch errors. This is the single most
 common "build looks fine but tests fail" trap.
 
+## `restart_all` is not only for swagger
+
+Plack also compiles `.pm` modules and top-level `.pl` scripts once. After any
+Perl change (including `git am`, a rebase, or reverting a file to test
+pre-fix behaviour), run `restart_all` before trusting a live UI, Cypress or
+`curl` result - otherwise you are testing the old in-memory code. JS and
+templates don't need it (JS bundles need `yarn build`). Details: `koha-workflow`.
+
 ## Watch mode (during iteration)
 
 For tight feedback loops while editing SCSS or JS, run in the background:

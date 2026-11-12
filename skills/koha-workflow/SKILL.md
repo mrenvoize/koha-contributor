@@ -43,12 +43,26 @@ proxied instance named `<name>`, and exports `KTD_INSTANCE`/`SYNC_REPO` in
 its tmux dev window:
 
 ```bash
-kd up bug_NNNNN [--bz]       # worktree + KTD instance; --bz applies the bug's patches
+kd up bug_NNNNN [--bz --non-interactive]   # worktree + KTD instance; --bz applies the bug's patches
 kd wt bug_NNNNN [--bz]       # worktree only
 kd shell bug_NNNNN           # container shell
 kd down bug_NNNNN            # stop instance and remove worktree (branch kept)
 kd list                      # all worktrees, Bugzilla status, container state
 ```
+
+**Always add `--non-interactive` to `--bz` when running unattended** (and close
+stdin and cap the output). Without it `git bz apply` prompts on a terminal that
+isn't there and loops on EOF - once that wrote a 13GB log, filled the 16G
+`/tmp` tmpfs and made every later Bash call fail with EDQUOT (freeing it needed
+the holding process killed: `lsof +L1`). Use:
+
+```bash
+timeout 900 kd up bug_NNNNN --bz --non-interactive </dev/null 2>&1 | head -c 1000000 > "$LOG"
+```
+
+Alternatively `kd up bug_NNNNN` without `--bz`, then run `koha-bz-apply` in the
+worktree. Exit status is git bz's own (3 = a dependency isn't ready, see
+`koha-bz-apply`).
 
 Steps 4 and "Resuming" still apply; skip Steps 2–3 and use `kd down` for
 clean-up (it keeps the branch unless `--rm=full`; confirm before using that).
@@ -103,15 +117,19 @@ ktd --name bug_NNNNN --wait-ready 180
 
 `koha-prove`, `koha-build`, `koha-qa`, `koha-schema-apply` and
 `koha-cypress` read `KTD_INSTANCE`. Shell state does **not** persist
-between tool calls, so set it on each command rather than exporting it
-once:
+between tool calls, so name the instance on each command. Substitute the
+literal name:
 
 ```bash
-KTD_INSTANCE=bug_NNNNN ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'prove -v t/db_dependent/Koha/Foo.t'
+ktd --name bug_NNNNN --shell --run 'prove -v t/db_dependent/Koha/Foo.t'
 ```
 
-(Or pass `--name bug_NNNNN` directly.) Run git and file edits from `$WT`,
-not from the main clone.
+Do **not** write `KTD_INSTANCE=bug_NNNNN ktd --name "${KTD_INSTANCE:-kohadev}" ...`:
+the shell expands `${KTD_INSTANCE:-kohadev}` *before* the prefix assignment
+applies, so it silently targets whatever stale `KTD_INSTANCE` the shell already
+exports (verified in bash and zsh). The `${KTD_INSTANCE:-kohadev}` snippets in
+the other skills are templates - put the real instance name in. Run git and
+file edits from `$WT`, not from the main clone.
 
 For Cypress on the host:
 
@@ -120,6 +138,44 @@ KOHA_INTRANET_URL=http://bug_NNNNN-intra.localhost \
 KOHA_OPAC_URL=http://bug_NNNNN.localhost \
 npx cypress run --spec "<path>"
 ```
+
+## Traps that look like app bugs
+
+- **Perl edits need `restart_all`, not only swagger edits.** Plack compiles
+  `.pm` **and top-level `.pl` scripts** once; changing them on disk (including
+  `git am`, `git bz apply`, a rebase, or deliberately reverting a file to test
+  pre-fix behaviour) changes nothing in the running instance. Symptoms: a
+  `Koha::Exceptions::Object::MethodNotCoveredByTests` for a method that exists,
+  or a regression test that passes on both patched and reverted code. Run
+  `ktd --name <name> --shell --run 'restart_all'`. JS/TT/CSS are served fresh
+  (JS bundles still need `yarn build`).
+- **A silent failure in a `.pl` script: check the Plack log.** A file-scope
+  `my` referenced inside a named `sub` in a top-level `.pl` doesn't survive
+  Plack's persistent interpreter ("Variable ... is not available"), and the sub
+  quietly sees it empty. Declare lookup tables inside the sub. Look in
+  `/var/log/koha/<instance>/plack-intranet-error.log` (or `plack-opac-...`)
+  before blaming the logic.
+- **After any raw `ktd ... up -d`, prove the mount.** If `SYNC_REPO` was stale
+  the container boots fine but mounts the wrong tree, and test/QA results are
+  about unrelated code. Check
+  `ktd --name <name> --shell --run 'git log --oneline -3'` against the worktree.
+- **Container exits with `Database is not empty!`.** Recreating the `koha`
+  service against a populated persistent `db` trips a deliberate safety check
+  (no data lost). Reliable fix: `ktd --name <name> down`, then
+  `ktd --name <name> --proxy up -d`; wait with a bounded poll of
+  `docker logs` for "ready to be enjoyed" (about 2 minutes), never an unbounded
+  `until`.
+- **Instance URL returns Traefik 404** - the instance was started without
+  `--proxy`, so it never joined the proxy network.
+- **A new `koha-conf.xml` key doesn't appear** in a long-lived container: the
+  live file was generated at instance creation. Edit it in place and
+  `restart_all`, or recreate the instance.
+- **zsh doesn't word-split `$var`.** `for r in $refs` iterates once over the
+  whole string, so multi-ref loops and `git log ... "$r"` fail silently.
+  Use an array, or `bash -c '...'`, and sanity-check against a known-present
+  case before trusting an empty result. Write `${n}` before `:` in refspecs.
+- **Fresh KTD DBs need `RESTBasicAuth=1`** before Cypress or `curl -u` against
+  the REST API.
 
 ## Resuming, rebasing, cleaning up
 

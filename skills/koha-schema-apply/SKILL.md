@@ -60,6 +60,19 @@ the commit message so QA reviewers don't flag the warning.
 
 ### Pseudo `belongs_to` (no real SQL FK)
 
+### TestBuilder fills unset columns with type-based random values
+
+`t::lib::TestBuilder` generates any column you don't set from its raw
+`data_type`, not from nullability or intent: `tinyint` gets 0 or 1, but
+`smallint`/`int`/`bigint` get a full random value for the range, and every
+`datetime`/`timestamp` gets "now" even when nullable. So adding a column, or
+retyping one (e.g. `tinyint(1)` flag to `smallint` counter), silently changes
+what every existing `build` call for that table produces - invisible until new
+code reads the column. Audit the `TestBuilder->build({ source => '<Table>' })`
+calls in existing tests and pin the column (`indemand => 0`,
+`arrived_on => undef`) wherever an assertion depends on it. If a test is wrong
+"for no apparent reason" right after a column change, check this first.
+
 When adding a `belongs_to` relation that does NOT have a real SQL foreign
 key, you MUST set `is_foreign_key_constraint => 0` — otherwise TestBuilder
 breaks for the parent class.

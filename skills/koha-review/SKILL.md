@@ -1,6 +1,6 @@
 ---
 name: koha-review
-description: QA review a Koha patchset for regressions, security, code quality, and Koha-specific conventions. Use when the user says "QA this", "review this patchset/branch/PR", "review my work", or "review N commits". Auto-detects patchset scope, runs specialist review agents in parallel based on file types touched, and synthesises findings into Critical/Important/Suggestion buckets with file:line citations.
+description: "QA review a Koha patchset for regressions, security, code quality, and Koha-specific conventions. Use when the user says \"QA this\", \"review this patchset/branch/PR\", \"review my work\", or \"review N commits\". Auto-detects patchset scope, runs specialist review agents in parallel based on file types touched, compares behaviour across preference/configuration combinations before and after the patch when it changes settings-dependent behaviour, and synthesises findings into Critical/Important/Suggestion buckets with file:line citations."
 ---
 
 QA-review a Koha patchset.
@@ -66,8 +66,15 @@ Before LLM review, encourage running the deterministic checks:
 - If touched: atomicupdate / kohastructure → suggest `koha-schema-apply` if
   not yet applied.
 
+- If the patch changes behaviour or a UI flow that depends on preferences or
+  rules: Step 7 (configuration combinations), and `koha-review-walkthrough`
+  for side-by-side before/after videos.
+
 Don't run them automatically — they may already have. Just note which are
-appropriate and let the user trigger them.
+appropriate and let the user trigger them. When you do read their output, grep
+it for warnings (`uninitialized` etc.): a warning the patch introduces is at
+least **Important**, because any test that renders that path under
+`Test::NoWarnings` will fail CI (see `koha-qa`).
 
 ## Step 4 — Spawn specialist agents in parallel
 
@@ -149,6 +156,11 @@ cheap to verify mechanically:
 - `FILTER none` only with explicit justification (e.g. pre-rendered HTML).
 - New strings are translatable: wrapped or inside template blocks the
   translation extractor sees.
+- Never `[% SET x = rs.as_list %]` and then call `x.size`/`x.count`. Template
+  Toolkit unwraps a one-element list to the bare `Koha::Object`, so it works
+  for 0 and 2+ rows and breaks for exactly 1 (an AUTOLOAD "method not covered
+  by tests" error at render time, which `prove` never sees). Iterate directly
+  (`FOR i IN rs.as_list`) or call `.count` on the resultset itself.
 
 ### Vue / JS
 - New components use Vue 3 Composition API (`<script setup>`).
@@ -173,6 +185,18 @@ cheap to verify mechanically:
 - New REST endpoint has a corresponding `t/db_dependent/api/v1/*.t`.
 - New UI feature has a Cypress spec.
 - Test files have `use Test::NoWarnings;` at the top.
+- A patch that adds or retypes a column: every existing
+  `TestBuilder->build({ source => '<Table>' })` that a new read path depends on
+  must pin the column (TestBuilder fills unset columns with type-based random
+  values and "now" for datetimes; see `koha-schema-apply`).
+- Does the test toggle every preference/rule the new code reads (Step 7)? A
+  setting read by new code that no test varies is an **Important** gap.
+
+### Test plans in the commit message
+- Steps are librarian-facing UI steps (page, click, expected result), with
+  `prove` only as an extra. A `prove`-only plan is **Important**.
+- Security fixes: the plan must reproduce through the browser or `curl` with
+  before, after and a control, not just automated tests (`koha-security-verify`).
 
 ### System preferences
 - New syspref has: an atomicupdate INSERT, a row in `installer/data/mysql/mandatory/sysprefs.sql` (alphabetical; missing it means fresh installs lack the pref), an entry in the right `.pref` file, a default value, a type, an explanation.
@@ -189,7 +213,54 @@ cheap to verify mechanically:
   same resource) instead of consolidating to one. Look for a later
   "consolidate" commit as a signal this already bit the author once.
 
-## Step 7 — Synthesise findings
+## Step 7 — Configuration combinations ("actions at a distance")
+
+A patch is rarely wrong in the default configuration. It goes wrong when a
+preference, circulation rule, library or category setting, permission or
+interface that the **old** code honoured is no longer consulted, or when two
+settings that gate the same decision interact differently. Run this step when
+the patch changes behaviour or a UI flow that reads settings; skip it for
+docs, pure refactors that keep tests green, and schema-only changes.
+
+1. **List the inputs on both sides.** For the touched functions, templates
+   and the code they call or replace, collect every setting read, before
+   (`main`) and after (patched): `C4::Context->preference('X')`,
+   `Koha.Preference('X')` in templates, `Koha::CirculationRules`
+   (`get_effective_rule`), branch/category/itemtype-specific values, library
+   groups and `IndependentBranches`, permissions, staff vs OPAC, plugin hooks,
+   `koha-conf.xml` keys. Present a small table: setting, read by old, read by
+   new, verdict.
+   - Read by old only → **dropped**: the likeliest regression. Is the
+     removal deliberate and stated in the commit message?
+   - Read by new only → new behaviour: does its default preserve today's?
+   - Read by both → check the semantics match for every value.
+2. **Choose combinations.** Always: baseline (defaults); each related setting
+   flipped alone; and the combinations where two settings gate the same
+   decision (e.g. `AutomaticItemReturn` x `TransfersBlockCirc` x
+   `AutomaticConfirmTransfer`). Use pairwise coverage, not the full product,
+   and keep it to roughly 25 scenarios; say what was left out.
+3. **Compare before and after with identical data.** Same seed, settings and
+   barcodes on an unpatched instance (a worktree of `main`, or the base the
+   series was built on) and the patched one. Backend: loop the combinations in
+   a Perl test with `t::lib::Mocks::mock_preference` and compare return
+   values and DB rows. UI flow: `koha-review-walkthrough` records matching
+   videos per combination and a side-by-side player. Compare the **database
+   outcome** first (item state, fines, transfers, holds, messages), then the
+   flow and wording.
+4. **Classify each difference:** same; UI differs but outcome same (usually
+   Suggestion unless intentional); **outcome differs** (Critical or Important
+   unless the bug intends it); possible only after (check it is gated by the
+   right setting). Check the same for main-vs-main first: a "regression" that
+   also happens on `main` is not the patch's fault - say so.
+5. **Leave the instance as you found it.** Restore every preference you
+   changed and note any you flipped by accident; leftover settings leak into
+   later `prove` runs.
+
+Report the matrix in the findings (setting combination, old outcome, new
+outcome, verdict). If time doesn't allow it, say which combinations were not
+exercised instead of implying coverage.
+
+## Step 8 — Synthesise findings
 
 Merge agent reports + direct checks. Deduplicate. Bucket as:
 
@@ -205,7 +276,7 @@ For each finding, give:
 
 Group by file when there are multiple findings in the same file.
 
-## Step 8 — Verdict
+## Step 9 — Verdict
 
 End with one of:
 

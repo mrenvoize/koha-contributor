@@ -2,7 +2,7 @@
 
 Claude Code skills for contributing to [Koha ILS](https://koha-community.org/).
 
-Bundles fourteen skills:
+Bundles seventeen skills:
 
 | Skill | Triggers | What it does |
 |-------|----------|--------------|
@@ -17,16 +17,20 @@ Bundles fourteen skills:
 | `atomicupdate` | "create atomicupdate", "scaffold a DB change for bug NNNNN" | Scaffolds a Koha atomicupdate `.pl` file, makes it executable, and reminds about the wider workflow. |
 | `koha-schema-apply` | "apply schema change", "regenerate dbic" | End-to-end DB workflow: runs `updatedatabase.pl`, `dbic --force`, and reminds about manual `is_boolean` / relation edits below the marker line. |
 | `koha-syspref` | "add a system preference", "new syspref" | Generates the atomicupdate INSERT and the matching `.pref` YAML entry so the syspref shows up in the admin UI. |
-| `koha-review` | "QA this patchset", "review my branch", "review last N commits" | Auto-detects patchset scope, fans out specialist review agents in parallel, applies a Koha-specific checklist, and synthesises Critical / Important / Suggestion findings with file:line citations. |
+| `koha-review` | "QA this patchset", "review my branch", "review last N commits" | Auto-detects patchset scope, fans out specialist review agents in parallel, applies a Koha-specific checklist, compares behaviour across preference and configuration combinations before and after the patch, and synthesises Critical / Important / Suggestion findings with file:line citations. |
+| `koha-review-walkthrough` | "record walkthrough videos", "compare before and after", "test the preference combinations" | Records matching before/after Playwright videos per scenario and preference combination against an unpatched and a patched KTD instance, verifies the database outcome, and builds a side-by-side compare player and results table. |
+| `koha-security-verify` | "verify this security fix", "curl test plan", "restricted security bug" | Proves a security fix in KTD: fail-then-pass regression test, and a Setup / Reproduce / Fix / Control browser or curl plan, with the auth, Plack and timing traps that give false confirmations. |
+| `koha-clean-series` | "clean up the commits", "squash the follow-ups", "untangle these branches" | Gets a branch ready for its first Bugzilla submission without interactive rebase: one bug per branch, self-caught fixes squashed into their parents, no specs or plans in the series. |
 | `koha-dashboard-queue` | "what's in Ready to push", "show my Failed QA", "list the Needs QA queue" | Reads a queue or a user's section from the dashboard.koha-community.org JSON API with your personal Bugzilla API key, presents it in the dashboard's order, and hands bugs to the other skills. Read-only. |
 | `koha-rm-queue` | "work the Ready to push queue", "release manager queue", "push the QA'd bugs" | Release-manager loop over the Ready to push queue: apply, QA review, RM follow-ups, DBRev, sign-off, push and Bugzilla updates, with the maintainer gating signing, pushing and every Bugzilla change. |
 
 ## Requirements
 
 - **Claude Code** with plugin support
-- **`git bz`** installed and authenticated (`git bz --help` once interactively to populate `~/.git-bz`) — for `koha-bz` and `koha-bz-fetch`
+- **`git bz`** (perl-git-bz 1.4.0 or newer for `git bz show`) installed and authenticated (`git bz --help` once interactively to populate `~/.git-bz`) — for `koha-bz` and `koha-bz-fetch`
 - **KTD** ([Koha Testing Docker](https://gitlab.com/koha-community/koha-testing-docker)) running, with container name `kohadev-koha-1` — for `koha-prove`, `koha-cypress`, `koha-qa`, `koha-build`, `koha-schema-apply`
 - **`curl` and `jq`**, plus a personal Bugzilla API key in `KOHA_DASHBOARD_API_KEY` — for `koha-dashboard-queue` and `koha-rm-queue` (see below)
+- **Playwright MCP** (the `playwright` plugin) and `python3` — for `koha-review-walkthrough`
 - A local Koha checkout — for `atomicupdate`, `koha-syspref`, `koha-review` (run from the repo root)
 
 ### Dashboard credentials (`koha-dashboard-queue`, `koha-rm-queue`)

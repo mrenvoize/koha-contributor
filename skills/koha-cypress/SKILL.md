@@ -51,6 +51,26 @@ available on the host.
    ```bash
    ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'yarn cypress run --spec <path>'
    ```
+   (Put the real instance name in `--name`; see `koha-workflow` for why the
+   `${KTD_INSTANCE:-kohadev}` idiom is only a template.) It works with no host
+   setup because KTD bundles Cypress. Use it straight away when the host has no
+   Cypress installed ("No version of Cypress is installed").
+
+## Host-side prerequisites for a per-bug instance
+
+- **`RESTBasicAuth=1`** - fresh KTD databases need it before Cypress runs.
+- **Perl changes need `restart_all`** in the container first, or Plack serves
+  the old code (`koha-build`).
+- **`node_modules`:** a new worktree has none. Symlink it from a sibling
+  worktree whose `yarn.lock` is identical (`cmp` them) and add `node_modules`
+  to `$(git rev-parse --git-path info/exclude)`.
+- **DB host:** specs that touch the DB need
+  `DB_HOSTNAME=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' <name>-db-1 | awk '{print $1}')`.
+- **Proxy domain:** `kd` uses `*.kohadev.home` when that resolves, else
+  `*.localhost`; read the real URLs from `ktd --list`.
+- **Host binary crashes** (segfault on launch): point `CYPRESS_RUN_BINARY` at
+  a newer installed binary under `~/.cache/Cypress/<version>/Cypress/Cypress`
+  and run under `xvfb-run -a`, or use the container fallback.
 
 ## Narrowing during development
 
