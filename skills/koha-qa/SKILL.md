@@ -55,8 +55,9 @@ The script reports per-commit. Triage flagged issues into:
 
 ### Known KTD environment limitations (NOT real failures — ignore)
 
-- **Vue/JS `tidiness`** — `prettier` is not in `$PATH` in KTD. To format,
-  run `/kohadevbox/node_modules/.bin/prettier --write <file>` then verify.
+- **Vue/JS `tidiness`** — `prettier` is not in `$PATH` in KTD. Format with
+  `perl misc/devel/tidy.pl <file>` (see "Always format with tidy.pl" below),
+  never by calling prettier yourself.
 - **`Bad plan` from `skip_all` + `Test::NoWarnings`** — when a test does
   `plan skip_all` because an optional module isn't installed,
   `Test::NoWarnings`' END block still runs and reports a bad plan. Harmless
@@ -77,9 +78,32 @@ The script reports per-commit. Triage flagged issues into:
   (the shell helper, not Perl's `warn`). For commits touching only those, use
   `git commit --no-verify`, say so in the summary, and let `koha-qa.pl` be the
   real check.
-- **`prettier --write` on a `.tt` file can corrupt unrelated markup** (it once
-  commented out a real `</head>`/`<body>` pair in `auth.tt`). `git diff` after
-  running it on any template and hand-revert everything outside your hunk.
+
+### Always format with tidy.pl, never prettier directly
+
+Format every Perl, JS/Vue/TS and Template Toolkit file with
+`perl misc/devel/tidy.pl <file>` inside KTD
+(`ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'perl misc/devel/tidy.pl <file>'`).
+Do **not** run `npx prettier`, `yarn prettier --write` or
+`/kohadevbox/node_modules/.bin/prettier` on a `.tt` or `.inc` file, and do not
+use editor format-on-save against `.prettierrc.js`.
+
+Why: the Koha TT prettier plugin deliberately rewrites `</head>`, `<body ...>`
+and `</body>` as `<!--</head>-->`, `<!--<body ...>-->` and `<!--</body>-->`
+(they are unbalanced inside one TT file). `tidy.pl` reverts those, and also
+normalises newlines around `<script>` tags and after `[% SWITCH %]`. Raw prettier
+skips the revert and leaves the page head and body commented out.
+
+Damage is **not self-healing and not caught by CI**: prettier turns an existing
+`<!--</head>-->` into `<!--<!--</head>-->-->`, `tidy.pl` strips only the inner
+pair, so a damaged file comes out of `tidy.pl` unchanged, and `xt/tt_tidy.t`
+(which compares `tidy.pl --no-write` output with the file) passes on it. Repair
+by hand (`sed -E 's#<!--(</head>)-->#\1#; s#^<!--(<body.*)-->$#\1#;
+s#<!--(</body>)-->#\1#'`), then check that
+`tidy.pl --silent --no-write <file> | diff - <file>` is empty.
+
+After formatting any template, `git diff | grep '^+.*<!--\(</head>\|<body\|</body>\)'`
+must print nothing.
 
 ### Warnings are findings
 
