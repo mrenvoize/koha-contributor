@@ -188,6 +188,48 @@ $schema->txn_do(sub {
 });
 ```
 
+### 4. **Standard POD for `_type` and `object_class`**
+
+Every `Koha::Object` subclass defines `_type`, and every `Koha::Objects`
+subclass also defines `object_class`. Document them with this exact POD, under
+an `=head2 Internal methods` section placed after the public methods. It names
+no class, so it can be copied unchanged; the class names live in the code right
+below it.
+
+```perl
+=head2 Internal methods
+
+=head3 _type
+
+Returns the name of the DBIx::Class result source this class maps to.
+
+=cut
+
+sub _type {
+    return 'Thing';
+}
+
+=head3 object_class
+
+Returns the name of the Koha::Object class this set is made of.
+
+=cut
+
+sub object_class {
+    return 'Koha::Thing';
+}
+```
+
+- Use `=head3` for both, never `=head2`, and don't write a class-specific
+  description (it goes stale on renames and gets copy-pasted wrong).
+- If the class already has an `=head2 Internal methods` section, put them
+  there instead of adding a second one.
+- Keep public methods (`to_api_mapping`, `strings_map`, accessors...) out of
+  `Internal methods`.
+- Only a computed `object_class` (e.g. polymorphic sets like
+  `Koha::File::Transports`) gets its own description.
+- `Koha::Object` and `Koha::Objects` show this snippet in their own POD.
+
 ## Common Patterns in Plugin Development
 
 ### 1. **Extending Existing Objects**
@@ -770,3 +812,7 @@ eval {
 ```
 
 This enforcement ensures users only see objects available to their library while providing administrators full control over library-specific restrictions.
+
+## See also
+
+- **[DBIC Relationship Naming for Accessor Methods](dbic_relationship_naming.md)** — naming conventions ensuring accessor methods are backed by DBIC relationships for sortable embeds and prefetching
